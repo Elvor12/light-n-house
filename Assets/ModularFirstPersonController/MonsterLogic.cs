@@ -119,8 +119,7 @@ public class MonsterLogic : MonoBehaviour
         }
         else
         {
-            if (agent.desiredVelocity.sqrMagnitude > 0.01f) desiredLookDirection = agent.desiredVelocity.normalized;
-            else desiredLookDirection = smootheLookDirection;
+            desiredLookDirection = GetNextDirection(smootheLookDirection);
         }
 
         if (desiredLookDirection.sqrMagnitude > 0.5f)
@@ -190,6 +189,17 @@ public class MonsterLogic : MonoBehaviour
         }
 
         return lenght;
+    }
+    private Vector3 GetNextDirection(Vector3 defaultDir) 
+    {
+        NavMeshPath path = agent.path;
+        Vector3 currentPos = transform.position;
+        if(agent.path != null && path.corners.Length > 1) 
+        {
+            return path.corners[1] - currentPos;
+        }
+        return defaultDir;
+
     }
     private void SetLine() 
     {
