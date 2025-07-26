@@ -5,13 +5,11 @@ using UnityEngine.AI;
 public class MonsterLogic : MonoBehaviour
 {
 
-    public GameObject target;
+    public GameObject mainTarget;
     public float wanderDist = 10f;
     public float setWanderTimer = 100f;
     public LineRenderer linerender;
     public float lineLenght;
-    public Vector3 direction = Vector3.zero;
-    public Vector3 destination = Vector3.zero;
 
     public float maxDist = 5;
     public float minDist = 2;
@@ -20,11 +18,18 @@ public class MonsterLogic : MonoBehaviour
     private Transform targetPos;
     private NavMeshAgent agent;
 
+    private Transform settedTarget = null;
+    private bool targetFollowed = false;
+    private bool targetLastTimeSeen = false;
+    private bool isLooking = false;
+    private Vector3 targetLastTimeSeenPos = Vector3.zero;
+    private Vector3 smootheLookDirection = Vector3.zero;
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        targetPos = target.GetComponent<Transform>();
+        targetPos = mainTarget.GetComponent<Transform>();
         agent = GetComponent<NavMeshAgent>();
         timer = setWanderTimer;
     }
@@ -37,30 +42,102 @@ public class MonsterLogic : MonoBehaviour
 
     void Update()
     {
-        Vector3 velocity = agent.velocity;
-
-        if(destination != Vector3.zero) direction = Vector3.Lerp(direction, destination - transform.position, viewTimer * Time.deltaTime).normalized;
-
-        SetLine();
-
-        timer -= Time.deltaTime;
-
-        NavMeshPath path = new NavMeshPath();
-
-        if(agent.CalculatePath(targetPos.position, path) && path.status == NavMeshPathStatus.PathComplete) 
+        UpdateViewDirection();
+        if (isLooking)
         {
-            destination = targetPos.position;
-        }
-        else if ((timer <= 0 && !agent.hasPath))
-        {   
-            Vector3 target = ValidNavMeshPoint(transform.position, wanderDist, -1, maxDist, minDist, agent);
-            destination = target;   
-            timer = setWanderTimer;
+            UpdateChaseSetup();
+            UpdateWanderSetup();
         }
         
-        if(Vector3.Distance(direction, (destination - transform.position).normalized) < 0.1f) 
+        
+        SetLine();
+    }
+
+    private void UpdateChaseSetup()
+    {
+        if (mainTarget != null)
         {
-            agent.SetDestination(destination);
+            NavMeshPath path = new NavMeshPath();
+            if (agent.CalculatePath(targetPos.position, path) && path.status == NavMeshPathStatus.PathComplete)
+            {
+                if (!agent.hasPath || Vector3.Distance(agent.destination, targetPos.position) > 1f) agent.SetDestination(targetPos.position);
+
+                settedTarget = targetPos;
+                targetFollowed = true;
+                targetLastTimeSeen = false;
+            }
+            else
+            {
+                if (settedTarget == targetPos)
+                {
+                    targetLastTimeSeenPos = targetPos.position;
+                    targetLastTimeSeen = true;
+                }
+                settedTarget = null;
+                targetFollowed = false;
+            }
+        }
+        else
+        {
+            settedTarget = null;
+            targetFollowed = false;
+            targetLastTimeSeen = false;
+        }
+    }
+
+    private void UpdateWanderSetup()
+    {
+        if (settedTarget == null || !targetFollowed)
+        {
+            timer -= Time.deltaTime;
+
+            if (timer <= 0 && !agent.hasPath)
+            {
+                Vector3 wanderTarget = ValidNavMeshPoint(transform.position, wanderDist, -1, maxDist, minDist, agent);
+                if (wanderTarget != transform.position)
+                {
+                    agent.SetDestination(wanderTarget);
+                }
+                timer = setWanderTimer;
+            }
+        }
+    }
+
+    private void UpdateViewDirection()
+    {
+        Vector3 desiredLookDirection;
+
+        if (settedTarget != null && targetFollowed)
+        {
+            desiredLookDirection = settedTarget.position - transform.position;
+        }
+        else if (targetLastTimeSeen)
+        {
+            desiredLookDirection = targetLastTimeSeenPos - transform.position;
+
+            targetLastTimeSeen = false;
+        }
+        else
+        {
+            if (agent.desiredVelocity.sqrMagnitude > 0.01f) desiredLookDirection = agent.desiredVelocity.normalized;
+            else desiredLookDirection = smootheLookDirection;
+        }
+
+        if (desiredLookDirection.sqrMagnitude > 0.5f)
+        {
+            desiredLookDirection.Normalize();
+
+            smootheLookDirection = Vector3.Slerp(smootheLookDirection, desiredLookDirection, viewTimer * Time.deltaTime);
+
+            Quaternion targetRotation = Quaternion.LookRotation(smootheLookDirection);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, viewTimer * Time.deltaTime);
+
+            float angleDifference = Quaternion.Angle(targetRotation, transform.rotation);
+            isLooking = angleDifference < 10f;
+        }
+        else
+        {
+            isLooking = true;
         }
     }
     private static Vector3 ValidNavMeshPoint(Vector3 originPos, float dist, int mask, float maxPathLenght, float minDist, NavMeshAgent agent)
@@ -117,7 +194,7 @@ public class MonsterLogic : MonoBehaviour
     private void SetLine() 
     {
         Vector3 startPos = transform.position;
-        Vector3 secondPos = startPos + direction.normalized * lineLenght;
+        Vector3 secondPos = startPos + smootheLookDirection.normalized * lineLenght;
         linerender.positionCount = 2;
         linerender.SetPosition(0, startPos);
         linerender.SetPosition(1, secondPos);

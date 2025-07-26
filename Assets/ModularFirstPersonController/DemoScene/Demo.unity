@@ -3019,17 +3019,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14af94817f9e2a24aa5315efb5e3a1bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 1548615163}
+  mainTarget: {fileID: 1548615163}
   wanderDist: 10
   setWanderTimer: 3
   linerender: {fileID: 1071780319}
   lineLenght: 5
-  direction: {x: 0, y: 0, z: 0}
-  destination: {x: 0, y: 0, z: 0}
   maxDist: 5
   minDist: 2
   timer: 0
-  viewTimer: 2
+  viewTimer: 4
 --- !u!195 &1071780314
 NavMeshAgent:
   m_ObjectHideFlags: 0
