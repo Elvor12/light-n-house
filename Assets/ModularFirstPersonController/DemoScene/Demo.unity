@@ -2991,7 +2991,7 @@ Transform:
   m_GameObject: {fileID: 765614912}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.1878099, w: 0.98220545}
-  m_LocalPosition: {x: -13.43, y: -0.5, z: -2.79}
+  m_LocalPosition: {x: -13.43, y: 0.72, z: -2.79}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4406,14 +4406,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainTarget: {fileID: 1548615163}
   wanderDist: 10
-  setWanderTimer: 3
+  setWanderTimer: 1
   directionLenght: 5
   linerender: {fileID: 1071780319}
   lineLenght: 5
   maxDistForTarget: 10
   minDistForTarget: 2
   minDistForDirection: 2
-  timer: 0
+  timer: 1
   viewTimer: 4
   obstacleMask:
     serializedVersion: 2
@@ -4421,7 +4421,7 @@ MonoBehaviour:
   playerMask:
     serializedVersion: 2
     m_Bits: 128
-  raycastAngle: 45
+  raycastAngle: 90
   lookLenght: 15
 --- !u!195 &1071780314
 NavMeshAgent:
@@ -4942,7 +4942,7 @@ Transform:
   m_GameObject: {fileID: 1187101985}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -24.29, y: 1, z: -3}
+  m_LocalPosition: {x: -25.88, y: 1, z: -3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -5911,7 +5911,7 @@ Transform:
   m_GameObject: {fileID: 1565053947}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.1878099, w: 0.98220545}
-  m_LocalPosition: {x: 0, y: -0.5, z: -5.5}
+  m_LocalPosition: {x: 0, y: 0.14, z: -5.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -6440,7 +6440,7 @@ Transform:
   m_GameObject: {fileID: 1751953556}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.1878099, w: 0.98220545}
-  m_LocalPosition: {x: -5.96, y: -0.5, z: -5.5}
+  m_LocalPosition: {x: -5.96, y: 0.33, z: -5.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

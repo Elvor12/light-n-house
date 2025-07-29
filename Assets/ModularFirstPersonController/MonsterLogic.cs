@@ -32,8 +32,10 @@ public class MonsterLogic : MonoBehaviour
 
     private bool goingToMid = false;
     private Vector3 targetLastTimeSeenPos = Vector3.zero;
-    private Vector3 smootheLookDirection = Vector3.zero;
+    private Vector3 smootheLookDirection = Vector3.forward;
+    private Vector3 shiftedLookDirection = Vector3.zero;
     private Vector3 fixedLookDirection = Vector3.zero;
+    private Vector3 dynamicAxe = Vector3.up;
 
     public LayerMask obstacleMask;
 
@@ -66,9 +68,6 @@ public class MonsterLogic : MonoBehaviour
 
         UpdateChaseSetup();
         UpdateWanderSetup();
-        
-        
-        
         
         SetLine();
     }
@@ -108,28 +107,38 @@ public class MonsterLogic : MonoBehaviour
             targetLastTimeSeen = false;
         }
     }
+    public void NoiseSetup(Vector3 position)
+    {
+        NavMeshPath path = new NavMeshPath();
+        if (agent.CalculatePath(position, path) && path.status == NavMeshPathStatus.PathComplete && position != transform.position)
+        {
+            agent.path = path;
+            agent.isStopped = false;
+        }
+    }
 
     private void UpdateWanderSetup()
     {
         if (settedTarget == null || !targetFollowed)
         {
-            timer -= Time.deltaTime;
-
-            
-            if (timer <= 0 && !agent.hasPath)
+            if (!agent.hasPath)
             {
-                NavMeshPath path = new NavMeshPath();
-                Vector3 wanderTarget = ValidNavMeshPoint(transform.position, wanderDist, -1, maxDistForTarget, minDistForTarget, agent);
-                if (wanderTarget != transform.position && agent.CalculatePath(wanderTarget, path))
+                timer -= Time.deltaTime;
+                if (timer <= 0)
                 {
-                    agent.path = path;
-                    agent.isStopped = true;
+                    NavMeshPath path = new NavMeshPath();
+                    Vector3 wanderTarget = ValidNavMeshPoint(transform.position, wanderDist, -1, maxDistForTarget, minDistForTarget, agent);
+                    if (wanderTarget != transform.position && agent.CalculatePath(wanderTarget, path))
+                    {
+                        agent.path = path;
+                        agent.isStopped = true;
+                    }
+                    timer = setWanderTimer;
                 }
             }
             if (isLooking && agent.isStopped)
             {
                 agent.isStopped = false;
-                timer = setWanderTimer;
             }
         }
         else
@@ -137,7 +146,6 @@ public class MonsterLogic : MonoBehaviour
             timer = setWanderTimer;
         }
     }
-
     private void UpdateViewDirection()
     {
         Vector3 desiredLookDirection;
@@ -164,6 +172,8 @@ public class MonsterLogic : MonoBehaviour
                 desiredLookDirection.Normalize();
                 Vector3 midDirection = CalculateMidDirection(smootheLookDirection, desiredLookDirection);
                 smootheLookDirection = UpdateSmootheLookDirection(smootheLookDirection, midDirection, desiredLookDirection);
+                Vector3 right = Vector3.Cross(smootheLookDirection, Vector3.up);
+                dynamicAxe = Vector3.Cross(right, smootheLookDirection);
 
                 Quaternion targetRotation = Quaternion.LookRotation(smootheLookDirection);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, viewTimer * Time.deltaTime);
@@ -172,13 +182,11 @@ public class MonsterLogic : MonoBehaviour
                 if (agent.isStopped)
                 {
                     isLooking = angleDifference < 5f;
-                    Debug.Log(Vector3.Angle(desiredLookDirection, smootheLookDirection));
                 }
                 
             }
             else
             {
-                Debug.Log("yep");
                 isLooking = true;
             }
         }
@@ -193,7 +201,7 @@ public class MonsterLogic : MonoBehaviour
     private Vector3 AbstractDirection()
     {
         Vector3 currentPos = transform.position;
-        
+
         if (!agent.hasPath || agent.path.corners.Length == 0) return currentPos + transform.forward * directionLenght;
 
         for (int i = currentPathCornerIndex; i < agent.path.corners.Length; i++)
@@ -222,13 +230,18 @@ public class MonsterLogic : MonoBehaviour
                         fixedLookDirection = (targetPointWithOffset - currentPos).normalized;
                         fixedLook = true;
                     }
-                    
+
                 }
                 break;
             }
         }
 
         return currentPos + fixedLookDirection * directionLenght;
+    }
+
+    private void ShiftDirection()
+    {
+        shiftedLookDirection = Quaternion.AngleAxis(30, dynamicAxe) * smootheLookDirection;
     }
 
     private Vector3 CalculateMidDirection(Vector3 currentDir, Vector3 endDirection)
@@ -253,7 +266,7 @@ public class MonsterLogic : MonoBehaviour
         {
             return midDirection;
         }
-        
+
         for (int i = 1; i < 100; i++)
         {
             float offset = offsetStep * i;
@@ -451,8 +464,8 @@ public class MonsterLogic : MonoBehaviour
             Gizmos.color = Color.red;
             Gizmos.DrawSphere(corners[currentPathCornerIndex], 0.3f);
         }
- 
-/*         if (targetPos == null)
+
+        if (targetPos == null)
             return;
 
         Gizmos.color = Color.green;
@@ -460,7 +473,7 @@ public class MonsterLogic : MonoBehaviour
 
         Vector3 direction = smootheLookDirection.normalized;
         Gizmos.DrawRay(origin, direction * lookLenght);
-        
+
         float halfAngle = raycastAngle * 0.5f;
 
         int segments = 10;
@@ -481,7 +494,9 @@ public class MonsterLogic : MonoBehaviour
             Vector3 rayDir = rotation * direction;
             Gizmos.DrawRay(origin, rayDir * lookLenght);
         } 
-     */
+        Gizmos.DrawRay(origin, dynamicAxe * lookLenght);
+        
+     
 
     }
 }
