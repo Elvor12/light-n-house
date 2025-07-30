@@ -19,6 +19,10 @@ public class MonsterLogic : MonoBehaviour
     public float minDistForDirection = 3f;
     public float timer;
     public float viewTimer = 2f;
+    private float angleForDirectionOffset = 0;
+    public float time = 0;
+    private int shiftingTime = 3;
+    private int rightOrLeft = 1;
     private Transform targetPos;
     private NavMeshAgent agent;
 
@@ -29,8 +33,12 @@ public class MonsterLogic : MonoBehaviour
     private bool targetLastTimeSeen = false;
     private bool isLooking = true;
     private bool fixedLook = false;
+    private bool focused = true;
 
     private bool goingToMid = false;
+    private bool goingToMidForShifting = false;
+
+    private Vector3 offsetDirection = Vector3.zero;
     private Vector3 targetLastTimeSeenPos = Vector3.zero;
     private Vector3 smootheLookDirection = Vector3.forward;
     private Vector3 shiftedLookDirection = Vector3.zero;
@@ -43,8 +51,6 @@ public class MonsterLogic : MonoBehaviour
 
     public float raycastAngle = 45;
     public float lookLenght = 5;
-
-
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -84,20 +90,25 @@ public class MonsterLogic : MonoBehaviour
                     agent.path = path;
                     agent.isStopped = false;
                 }
-                
+
+                shiftingTime = 3;
+                focused = true;
                 settedTarget = targetPos;
                 targetFollowed = true;
                 targetLastTimeSeen = false;
             }
-            else
+            else if(settedTarget == targetPos)
             {
-                if (settedTarget == targetPos)
+                if (targetLastTimeSeenPos != transform.position)
                 {
                     SetDestination(targetLastTimeSeenPos);
                     targetLastTimeSeen = true;
                 }
-                settedTarget = null;
                 targetFollowed = false;
+                if (Vector3.Distance(targetLastTimeSeenPos, transform.position) < 2f && targetLastTimeSeen && ShiftDirection())
+                {
+                    settedTarget = null;
+                }
             }
         }
         else
@@ -116,10 +127,9 @@ public class MonsterLogic : MonoBehaviour
             agent.isStopped = false;
         }
     }
-
     private void UpdateWanderSetup()
     {
-        if (settedTarget == null || !targetFollowed)
+        if (settedTarget == null && !targetFollowed)
         {
             if (!agent.hasPath)
             {
@@ -156,14 +166,9 @@ public class MonsterLogic : MonoBehaviour
             {
                 desiredLookDirection = settedTarget.position - currentPos;
             }
-            else if (targetLastTimeSeen)
-            {
-                desiredLookDirection = targetLastTimeSeenPos - currentPos;
-
-                targetLastTimeSeen = false;
-            }
             else
             {
+                if(targetLastTimeSeen) targetLastTimeSeen = false;
                 desiredLookDirection = AbstractDirection() - currentPos;
             }
 
@@ -171,10 +176,13 @@ public class MonsterLogic : MonoBehaviour
             {
                 desiredLookDirection.Normalize();
                 Vector3 midDirection = CalculateMidDirection(smootheLookDirection, desiredLookDirection);
-                smootheLookDirection = UpdateSmootheLookDirection(smootheLookDirection, midDirection, desiredLookDirection);
+                smootheLookDirection = UpdateSmootheLookDirection(smootheLookDirection, midDirection, desiredLookDirection, ref goingToMid);
                 Vector3 right = Vector3.Cross(smootheLookDirection, Vector3.up);
                 dynamicAxe = Vector3.Cross(right, smootheLookDirection);
-
+                if (focused)
+                {
+                    shiftedLookDirection = Vector3.Slerp(shiftedLookDirection, smootheLookDirection, Time.deltaTime * 5);
+                }
                 Quaternion targetRotation = Quaternion.LookRotation(smootheLookDirection);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, viewTimer * Time.deltaTime);
                 float angleDifference = Vector3.Angle(desiredLookDirection, smootheLookDirection);
@@ -239,9 +247,33 @@ public class MonsterLogic : MonoBehaviour
         return currentPos + fixedLookDirection * directionLenght;
     }
 
-    private void ShiftDirection()
+    private bool ShiftDirection()
     {
-        shiftedLookDirection = Quaternion.AngleAxis(30, dynamicAxe) * smootheLookDirection;
+        focused = false;
+        if (angleForDirectionOffset == 0)
+        {
+            angleForDirectionOffset = Random.Range(70, 120) * rightOrLeft;
+            rightOrLeft = -rightOrLeft;
+            offsetDirection = Quaternion.AngleAxis(angleForDirectionOffset, dynamicAxe) * smootheLookDirection;
+        }
+        Debug.Log(offsetDirection);
+        shiftedLookDirection = UpdateSmootheLookDirection(shiftedLookDirection, smootheLookDirection, offsetDirection, ref goingToMidForShifting);
+        if (Vector3.Angle(shiftedLookDirection, offsetDirection) < 5f && shiftingTime > 0)
+        {
+            goingToMidForShifting = true;
+            angleForDirectionOffset = 0;
+            shiftingTime -= 1;
+        }
+
+        if (shiftingTime <= 0)
+        {
+            shiftingTime = 3;
+            goingToMidForShifting = false;
+            focused = true;
+            return true;
+        }
+
+        return false;
     }
 
     private Vector3 CalculateMidDirection(Vector3 currentDir, Vector3 endDirection)
@@ -274,27 +306,21 @@ public class MonsterLogic : MonoBehaviour
             Vector3 directionPos = (midDirection + rotationAxis * offset).normalized;
             if (Vector3.Angle(directionPos, down) >= deadZoneAngle)
             {
-                Debug.Log(midDirection);
-                Debug.Log(rotationAxis);
-
                 goingToMid = true;
                 return directionPos;
             }
             Vector3 directionNeg = (midDirection - rotationAxis * offset).normalized;
             if (Vector3.Angle(directionNeg, down) >= deadZoneAngle)
             {
-                Debug.Log(midDirection);
-                Debug.Log(rotationAxis);
                 goingToMid = true;
                 return directionNeg;
             }
         }
-        Debug.Log("Skill issue");
         goingToMid = true;
         return midDirection;
     }
 
-    private Vector3 UpdateSmootheLookDirection(Vector3 startDirection, Vector3 midDirection, Vector3 endDirection)
+    private Vector3 UpdateSmootheLookDirection(Vector3 startDirection, Vector3 midDirection, Vector3 endDirection, ref bool goingToMid)
     {
         startDirection.Normalize();
         midDirection.Normalize();
@@ -303,18 +329,19 @@ public class MonsterLogic : MonoBehaviour
         float angleStartEnd = Vector3.Angle(startDirection, endDirection);
         float angleStartMid = Vector3.Angle(startDirection, midDirection);
         float angleMidEnd = Vector3.Angle(midDirection, endDirection);
-
-        if (goingToMid && Mathf.Abs(angleStartEnd - (angleStartMid + angleMidEnd)) < 0.01f)
+        if (goingToMid && Mathf.Abs(angleStartEnd + 1 - (angleStartMid + angleMidEnd)) == 1f)
         {
             goingToMid = false;
         }
 
-        float proportion = goingToMid ? Mathf.Clamp01(angleMidEnd / angleStartEnd) : 1f;
+        float proportion = goingToMid ? angleStartEnd / angleStartMid : 1f;
 
         float interpolationFactor = proportion * Time.deltaTime * 3f;
 
-        if (goingToMid)
+        if (goingToMid) {
+            Debug.Log("rotation");
             return Vector3.Slerp(startDirection, midDirection, interpolationFactor);
+        }
         else
             return Vector3.Slerp(startDirection, endDirection, interpolationFactor);
     }
@@ -322,7 +349,7 @@ public class MonsterLogic : MonoBehaviour
     private bool ObserveCheck()
     {
         Vector3 directionToTarget = targetPos.position - transform.position;
-        float angle = Vector3.Angle(directionToTarget, smootheLookDirection);
+        float angle = Vector3.Angle(directionToTarget, shiftedLookDirection);
 
         if (angle < raycastAngle)
         {
@@ -471,7 +498,7 @@ public class MonsterLogic : MonoBehaviour
         Gizmos.color = Color.green;
         Vector3 origin = transform.position;
 
-        Vector3 direction = smootheLookDirection.normalized;
+        Vector3 direction = shiftedLookDirection.normalized;
         Gizmos.DrawRay(origin, direction * lookLenght);
 
         float halfAngle = raycastAngle * 0.5f;

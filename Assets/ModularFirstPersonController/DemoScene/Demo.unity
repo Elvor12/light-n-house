@@ -4589,13 +4589,14 @@ MonoBehaviour:
   minDistForDirection: 2
   timer: 1
   viewTimer: 4
+  time: 0
   obstacleMask:
     serializedVersion: 2
     m_Bits: 64
   playerMask:
     serializedVersion: 2
     m_Bits: 128
-  raycastAngle: 90
+  raycastAngle: 30
   lookLenght: 15
 --- !u!195 &1071780314
 NavMeshAgent:
