@@ -19,9 +19,12 @@ public class MonsterLogic : MonoBehaviour
     public float minDistForDirection = 3f;
     public float timer;
     public float viewTimer = 2f;
+    public float timerForCaution = 0;
+    public float timerForShifting = 0;
     private float angleForDirectionOffset = 0;
     public float time = 0;
-    private int shiftingTime = 3;
+    public int shiftingTime = 3;
+    private int cautionShiftingTime = 2;
     private int rightOrLeft = 1;
     private Transform targetPos;
     private NavMeshAgent agent;
@@ -37,6 +40,7 @@ public class MonsterLogic : MonoBehaviour
 
     private bool goingToMid = false;
     private bool goingToMidForShifting = false;
+    private bool caution = false;
 
     private Vector3 offsetDirection = Vector3.zero;
     private Vector3 targetLastTimeSeenPos = Vector3.zero;
@@ -74,8 +78,37 @@ public class MonsterLogic : MonoBehaviour
 
         UpdateChaseSetup();
         UpdateWanderSetup();
-        
+
         SetLine();
+        if (caution)
+        {
+            ActivateCautionProtocol();
+        }
+    }
+
+    private void ActivateCautionProtocol()
+    {
+        if (timerForCaution == 0)
+        {
+            agent.speed = 1;
+            setWanderTimer = 3;
+        }
+        if (!agent.isStopped) ShiftDirection(ref cautionShiftingTime, 2);
+        else
+        {
+            cautionShiftingTime = 2;
+            focused = true;
+            shiftingTime = 3;
+        }
+
+        timerForCaution += Time.deltaTime;
+        if (timerForCaution >= 20 && agent.isStopped || settedTarget == targetPos)
+        {
+            timerForCaution = 0;
+            agent.speed = 3.5f;
+            focused = true;
+            caution = false;
+        }
     }
 
     private void UpdateChaseSetup()
@@ -97,7 +130,7 @@ public class MonsterLogic : MonoBehaviour
                 targetFollowed = true;
                 targetLastTimeSeen = false;
             }
-            else if(settedTarget == targetPos)
+            else if (settedTarget == targetPos)
             {
                 if (targetLastTimeSeenPos != transform.position)
                 {
@@ -105,9 +138,12 @@ public class MonsterLogic : MonoBehaviour
                     targetLastTimeSeen = true;
                 }
                 targetFollowed = false;
-                if (Vector3.Distance(targetLastTimeSeenPos, transform.position) < 2f && targetLastTimeSeen && ShiftDirection())
+                if (Vector3.Distance(targetLastTimeSeenPos, transform.position) < 2f && targetLastTimeSeen && ShiftDirection(ref shiftingTime, 1))
                 {
+                    agent.isStopped = true;
+                    shiftingTime = 3;
                     settedTarget = null;
+                    caution = true;
                 }
             }
         }
@@ -160,6 +196,8 @@ public class MonsterLogic : MonoBehaviour
     {
         Vector3 desiredLookDirection;
         Vector3 currentPos = transform.position;
+
+        
         if (agent.hasPath)
         {
             if (settedTarget != null && targetFollowed)
@@ -168,10 +206,9 @@ public class MonsterLogic : MonoBehaviour
             }
             else
             {
-                if(targetLastTimeSeen) targetLastTimeSeen = false;
+                if (targetLastTimeSeen) targetLastTimeSeen = false;
                 desiredLookDirection = AbstractDirection() - currentPos;
             }
-
             if (desiredLookDirection.sqrMagnitude > 0.5f)
             {
                 desiredLookDirection.Normalize();
@@ -179,19 +216,16 @@ public class MonsterLogic : MonoBehaviour
                 smootheLookDirection = UpdateSmootheLookDirection(smootheLookDirection, midDirection, desiredLookDirection, ref goingToMid);
                 Vector3 right = Vector3.Cross(smootheLookDirection, Vector3.up);
                 dynamicAxe = Vector3.Cross(right, smootheLookDirection);
-                if (focused)
-                {
-                    shiftedLookDirection = Vector3.Slerp(shiftedLookDirection, smootheLookDirection, Time.deltaTime * 5);
-                }
+
                 Quaternion targetRotation = Quaternion.LookRotation(smootheLookDirection);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, viewTimer * Time.deltaTime);
                 float angleDifference = Vector3.Angle(desiredLookDirection, smootheLookDirection);
-                
+
                 if (agent.isStopped)
                 {
                     isLooking = angleDifference < 5f;
                 }
-                
+
             }
             else
             {
@@ -203,7 +237,10 @@ public class MonsterLogic : MonoBehaviour
             fixedLook = false;
             currentPathCornerIndex = 1;
         }
-        
+        if (focused)
+        {
+            shiftedLookDirection = Vector3.Slerp(shiftedLookDirection, smootheLookDirection, Time.deltaTime * 5);
+        }
     }
 
     private Vector3 AbstractDirection()
@@ -247,31 +284,38 @@ public class MonsterLogic : MonoBehaviour
         return currentPos + fixedLookDirection * directionLenght;
     }
 
-    private bool ShiftDirection()
+    private bool ShiftDirection(ref int shiftingTime, float board = 0f)
     {
         focused = false;
+
+        if (shiftingTime <= 0)
+        {
+            goingToMidForShifting = false;
+            focused = true;
+            return true;
+        }
+
         if (angleForDirectionOffset == 0)
         {
             angleForDirectionOffset = Random.Range(70, 120) * rightOrLeft;
             rightOrLeft = -rightOrLeft;
             offsetDirection = Quaternion.AngleAxis(angleForDirectionOffset, dynamicAxe) * smootheLookDirection;
         }
-        Debug.Log(offsetDirection);
         shiftedLookDirection = UpdateSmootheLookDirection(shiftedLookDirection, smootheLookDirection, offsetDirection, ref goingToMidForShifting);
-        if (Vector3.Angle(shiftedLookDirection, offsetDirection) < 5f && shiftingTime > 0)
+        if (Vector3.Angle(shiftedLookDirection, offsetDirection) < 5f && shiftingTime > 0 )
         {
-            goingToMidForShifting = true;
-            angleForDirectionOffset = 0;
-            shiftingTime -= 1;
+            timerForShifting += Time.deltaTime;
+            if (timerForShifting >= board)
+            {
+                goingToMidForShifting = true;
+                angleForDirectionOffset = 0;
+                shiftingTime -= 1;
+                timerForShifting = 0;
+            }
+            
         }
 
-        if (shiftingTime <= 0)
-        {
-            shiftingTime = 3;
-            goingToMidForShifting = false;
-            focused = true;
-            return true;
-        }
+        
 
         return false;
     }
@@ -329,12 +373,12 @@ public class MonsterLogic : MonoBehaviour
         float angleStartEnd = Vector3.Angle(startDirection, endDirection);
         float angleStartMid = Vector3.Angle(startDirection, midDirection);
         float angleMidEnd = Vector3.Angle(midDirection, endDirection);
-        if (goingToMid && Mathf.Abs(angleStartEnd + 1 - (angleStartMid + angleMidEnd)) == 1f)
+        if (goingToMid && Mathf.Approximately(Mathf.Abs(angleStartEnd + 1 - (angleStartMid + angleMidEnd)), 1f))
         {
             goingToMid = false;
         }
 
-        float proportion = goingToMid ? angleStartEnd / angleStartMid : 1f;
+        float proportion = goingToMid ? angleStartEnd / angleStartMid / 2 : 1f;
 
         float interpolationFactor = proportion * Time.deltaTime * 3f;
 

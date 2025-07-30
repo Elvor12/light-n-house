@@ -3804,7 +3804,7 @@ GameObject:
   - component: {fileID: 974042053}
   - component: {fileID: 974042052}
   - component: {fileID: 974042051}
-  m_Layer: 6
+  m_Layer: 2
   m_Name: Cube (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4589,7 +4589,10 @@ MonoBehaviour:
   minDistForDirection: 2
   timer: 1
   viewTimer: 4
+  timerForCaution: 0
+  timerForShifting: 0
   time: 0
+  shiftingTime: 3
   obstacleMask:
     serializedVersion: 2
     m_Bits: 64
@@ -4719,7 +4722,7 @@ LineRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1071780312}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
