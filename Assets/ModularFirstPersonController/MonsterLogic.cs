@@ -18,6 +18,7 @@ public class MonsterLogic : MonoBehaviour
     public float minDistForTarget = 2f;
     public float minDistForDirection = 3f;
     public float timer;
+    private float chaseTimer;
     public float viewTimer = 2f;
     public float timerForCaution = 0;
     public float timerForShifting = 0;
@@ -48,7 +49,9 @@ public class MonsterLogic : MonoBehaviour
     private Vector3 shiftedLookDirection = Vector3.zero;
     private Vector3 fixedLookDirection = Vector3.zero;
     private Vector3 dynamicAxe = Vector3.up;
-    private Vector3 interestPoint = Vector3.zero;
+    public Vector3 interestPointPos = Vector3.zero;
+    public Vector3 targetPointPos = Vector3.zero;
+    public PatrolPoint interestPoint;
 
     public LayerMask obstacleMask;
 
@@ -56,6 +59,8 @@ public class MonsterLogic : MonoBehaviour
 
     public float raycastAngle = 45;
     public float lookLenght = 5;
+    private NavMeshPath path;
+    public NavMeshPath interestPath;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -63,6 +68,8 @@ public class MonsterLogic : MonoBehaviour
         targetPos = mainTarget.GetComponent<Transform>();
         agent = GetComponent<NavMeshAgent>();
         timer = setWanderTimer;
+        path = new();
+        interestPath = new();
         //interestPoint = targetPos.position;
     }
 
@@ -74,14 +81,16 @@ public class MonsterLogic : MonoBehaviour
 
     void Update()
     {
+        chaseTimer += Time.deltaTime;
         isLooking = false;
         NodeFixator();
         UpdateViewDirection();
 
         UpdateChaseSetup();
-        if (interestPoint != Vector3.zero)
+
+        if (targetPointPos != Vector3.zero)
         {
-            UpdateWanderSetup(interestPoint);
+            UpdateWanderSetup(targetPointPos);
         }
         else UpdateWanderSetup();
 
@@ -121,9 +130,9 @@ public class MonsterLogic : MonoBehaviour
     {
         if (mainTarget != null)
         {
-            NavMeshPath path = new NavMeshPath();
-            if (agent.CalculatePath(targetPos.position, path) && path.status == NavMeshPathStatus.PathComplete && ObserveCheck())
+            if (agent.CalculatePath(targetPos.position, path) && path.status == NavMeshPathStatus.PathComplete && ObserveCheck() && chaseTimer > 0.15f)
             {
+                chaseTimer = 0f;
                 if (Vector3.Distance(agent.destination, targetPos.position) > 1f)
                 {
                     agent.path = path;
@@ -162,7 +171,6 @@ public class MonsterLogic : MonoBehaviour
     }
     public void NoiseSetup(Vector3 position)
     {
-        NavMeshPath path = new NavMeshPath();
         if (agent.CalculatePath(position, path) && path.status == NavMeshPathStatus.PathComplete && position != transform.position)
         {
             agent.path = path;
@@ -177,12 +185,12 @@ public class MonsterLogic : MonoBehaviour
     {
         if (settedTarget == null && !targetFollowed)
         {
+            if (interestPoint == null) interestPath = SetPathToPoint(targetPointPos, interestPath);
             if (!agent.hasPath)
             {
                 timer -= Time.deltaTime;
                 if (timer <= 0)
                 {
-                    NavMeshPath path = new NavMeshPath();
                     Vector3 wanderTarget = ValidNavMeshPoint(transform.position, wanderDist, -1, maxDistForTarget, minDistForTarget, agent, interest);
                     if (wanderTarget != transform.position && agent.CalculatePath(wanderTarget, path))
                     {
@@ -459,15 +467,13 @@ public class MonsterLogic : MonoBehaviour
                 if (NavMesh.CalculatePath(point, interest, agent.areaMask, interestPath) && interestPath.status == NavMeshPathStatus.PathComplete)
                 {
                     
-                    if (GetPathLenght(interestPath) >= GetPathLenght(SetPathToInterestPoint(interestPoint)))
+                    if (GetPathLenght(interestPath) >= GetPathLenght(this.interestPath))
                     {
                         continue;
                     }
                 }
                 else return originPos;
-            }
-            NavMeshPath path = new();
-            
+            }            
             if (agent.CalculatePath(point, path) && path.status == NavMeshPathStatus.PathComplete)
             {
                 
@@ -483,9 +489,8 @@ public class MonsterLogic : MonoBehaviour
 
         return originPos;
     }
-    private NavMeshPath SetPathToInterestPoint(Vector3 point)
+    private NavMeshPath SetPathToPoint(Vector3 point, NavMeshPath path)
     {
-        NavMeshPath path = new();
         agent.CalculatePath(point, path);
         return path;
     }
@@ -502,7 +507,7 @@ public class MonsterLogic : MonoBehaviour
         return originPos;
     }
 
-    private static float GetPathLenght(NavMeshPath path)
+    public static float GetPathLenght(NavMeshPath path)
     {
         float lenght = 0f;
         if (path.corners.Length < 2)
@@ -541,6 +546,14 @@ public class MonsterLogic : MonoBehaviour
         float dist = dir.magnitude;
         dir.Normalize();
         return !Physics.Raycast(from, dir, dist, obstacleMask);
+    }
+    public void UpdatePatrolPoint(PatrolPoint point)
+    {
+        if (point != interestPoint)
+        {
+        interestPoint = point;
+        interestPointPos = interestPoint.position;
+        }
     }
 
     private void OnDrawGizmos()
@@ -595,10 +608,10 @@ public class MonsterLogic : MonoBehaviour
             Quaternion rotation = Quaternion.AngleAxis(angle, up);
             Vector3 rayDir = rotation * direction;
             Gizmos.DrawRay(origin, rayDir * lookLenght);
-        } 
+        }
         Gizmos.DrawRay(origin, dynamicAxe * lookLenght);
-        
-     
+
+
 
     }
 }
