@@ -48,6 +48,7 @@ public class MonsterLogic : MonoBehaviour
     private Vector3 shiftedLookDirection = Vector3.zero;
     private Vector3 fixedLookDirection = Vector3.zero;
     private Vector3 dynamicAxe = Vector3.up;
+    private Vector3 interestPoint = Vector3.zero;
 
     public LayerMask obstacleMask;
 
@@ -62,6 +63,7 @@ public class MonsterLogic : MonoBehaviour
         targetPos = mainTarget.GetComponent<Transform>();
         agent = GetComponent<NavMeshAgent>();
         timer = setWanderTimer;
+        //interestPoint = targetPos.position;
     }
 
     // Update is called once per frame
@@ -77,7 +79,11 @@ public class MonsterLogic : MonoBehaviour
         UpdateViewDirection();
 
         UpdateChaseSetup();
-        UpdateWanderSetup();
+        if (interestPoint != Vector3.zero)
+        {
+            UpdateWanderSetup(interestPoint);
+        }
+        else UpdateWanderSetup();
 
         SetLine();
         if (caution)
@@ -165,6 +171,10 @@ public class MonsterLogic : MonoBehaviour
     }
     private void UpdateWanderSetup()
     {
+        UpdateWanderSetup(Vector3.zero);
+    }
+    private void UpdateWanderSetup(Vector3 interest)
+    {
         if (settedTarget == null && !targetFollowed)
         {
             if (!agent.hasPath)
@@ -173,7 +183,7 @@ public class MonsterLogic : MonoBehaviour
                 if (timer <= 0)
                 {
                     NavMeshPath path = new NavMeshPath();
-                    Vector3 wanderTarget = ValidNavMeshPoint(transform.position, wanderDist, -1, maxDistForTarget, minDistForTarget, agent);
+                    Vector3 wanderTarget = ValidNavMeshPoint(transform.position, wanderDist, -1, maxDistForTarget, minDistForTarget, agent, interest);
                     if (wanderTarget != transform.position && agent.CalculatePath(wanderTarget, path))
                     {
                         agent.path = path;
@@ -434,7 +444,7 @@ public class MonsterLogic : MonoBehaviour
         fixedLook = false;
         currentPathCornerIndex = 1;
     }
-    private static Vector3 ValidNavMeshPoint(Vector3 originPos, float dist, int mask, float maxPathLenght, float minDist, NavMeshAgent agent)
+    private Vector3 ValidNavMeshPoint(Vector3 originPos, float dist, int mask, float maxPathLenght, float minDist, NavMeshAgent agent, Vector3 interest)
     {
         int tries = 10;
         for (int i = 0; i <= tries; i++)
@@ -443,9 +453,24 @@ public class MonsterLogic : MonoBehaviour
 
             if (Vector3.Distance(originPos, point) < minDist) continue;
 
+            if (interest != Vector3.zero)
+            {
+                NavMeshPath interestPath = new();
+                if (NavMesh.CalculatePath(point, interest, agent.areaMask, interestPath) && interestPath.status == NavMeshPathStatus.PathComplete)
+                {
+                    
+                    if (GetPathLenght(interestPath) >= GetPathLenght(SetPathToInterestPoint(interestPoint)))
+                    {
+                        continue;
+                    }
+                }
+                else return originPos;
+            }
             NavMeshPath path = new();
+            
             if (agent.CalculatePath(point, path) && path.status == NavMeshPathStatus.PathComplete)
             {
+                
                 float lenght = GetPathLenght(path);
 
                 if (lenght <= maxPathLenght && lenght > minDist)
@@ -458,8 +483,14 @@ public class MonsterLogic : MonoBehaviour
 
         return originPos;
     }
+    private NavMeshPath SetPathToInterestPoint(Vector3 point)
+    {
+        NavMeshPath path = new();
+        agent.CalculatePath(point, path);
+        return path;
+    }
 
-    private static Vector3 NavMeshPoint(Vector3 originPos, float dist, int mask)
+    private Vector3 NavMeshPoint(Vector3 originPos, float dist, int mask)
     {
         Vector3 randomPos = Random.insideUnitSphere * dist;
         randomPos += originPos;
