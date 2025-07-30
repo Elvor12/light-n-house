@@ -169,6 +169,12 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 128
+  lightMask:
+    serializedVersion: 2
+    m_Bits: 256
   shadowZoneTag: ShadowZone
   shadowStayTime: 3
+  escapeRadius: 10.1
+  lightDirection: {fileID: 0}
+  lightAngle: 30
   lighthouse: {fileID: 6270141360609327506, guid: 9774a8ffb553b614fadf6a6276ca21db, type: 3}

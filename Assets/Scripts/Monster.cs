@@ -1,11 +1,13 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
 public class Monster : MonoBehaviour
 {
     [SerializeField] private float runSpeed = 5f;
     [SerializeField] private LayerMask obstacleMask;
+    [SerializeField] private LayerMask lightMask;
     [SerializeField] private string shadowZoneTag = "ShadowZone";
     [SerializeField] private float shadowStayTime = 3f;
+    [SerializeField] private float escapeRadius = 15f;
 
     public Transform lighthouse;
 
@@ -20,19 +22,13 @@ public class Monster : MonoBehaviour
     private Vector2 escapeTarget;
     private Vector2 returnTarget;
 
-    private Camera mainCamera;
-
     private float shadowTimer = 0f;
+    private int panicSide = 1;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        mainCamera = Camera.main;
-
-        if (lighthouse != null)
-        {
-            StartMovingToLighthouse();
-        }
+        if (lighthouse != null) StartMovingToLighthouse();
     }
 
     void StartMovingToLighthouse()
@@ -45,54 +41,35 @@ public class Monster : MonoBehaviour
         Vector2 desiredDir = ((Vector2)returnTarget - position).normalized;
         Vector2 newDir = TryFindEscapeDirection(position, desiredDir);
 
-        if (newDir != Vector2.zero)
-        {
-            runDirection = newDir;
-            inShadow = false;
-            escaping = false;
-        }
-        else
-        {
-            runDirection = Vector2.zero;
-        }
-    }
-
-    Vector2 TryFindEscapeDirection(Vector2 currentPos, Vector2 desiredDir)
-    {
-        float maxAngle = 90f;
-        float angleStep = 5f;
-
-        for (float angle = 0; angle <= maxAngle; angle += angleStep)
-        {
-            Vector2 testDir1 = Quaternion.Euler(0, 0, angle) * desiredDir;
-            if (!Physics2D.Raycast(currentPos, testDir1, runSpeed * Time.fixedDeltaTime + 0.1f, obstacleMask))
-                return testDir1.normalized;
-
-            Vector2 testDir2 = Quaternion.Euler(0, 0, -angle) * desiredDir;
-            if (!Physics2D.Raycast(currentPos, testDir2, runSpeed * Time.fixedDeltaTime + 0.1f, obstacleMask))
-                return testDir2.normalized;
-        }
-        return Vector2.zero;
+        runDirection = newDir != Vector2.zero ? newDir : Vector2.zero;
     }
 
     void FixedUpdate()
     {
         Vector2 position = rb.position;
 
+        if (!escaping && !inShadow)
+        {
+            Collider2D lightHit = Physics2D.OverlapPoint(position, lightMask);
+            if (lightHit != null)
+            {
+                EscapeFrom(lighthouse);
+                return;
+            }
+        }
+
         if (escaping && lighthouse != null)
         {
+            UpdateEscapeTarget();
             Vector2 desiredDir = (escapeTarget - position).normalized;
             Vector2 newDir = TryFindEscapeDirection(position, desiredDir);
-
-            if (newDir == Vector2.zero)
-                return;
-
             runDirection = newDir;
+
             Vector2 nextPos = position + runDirection * runSpeed * Time.fixedDeltaTime;
             rb.MovePosition(nextPos);
 
             float distToTarget = Vector2.Distance(nextPos, escapeTarget);
-            if (distToTarget < 0.1f || IsOutOfCameraView(nextPos))
+            if (distToTarget < 0.1f || Vector2.Distance(nextPos, lighthouse.position) > escapeRadius)
             {
                 if (Vector2.Distance(escapeTarget, GetClosestPointInShadowZone(nextPos)) < 0.1f)
                 {
@@ -103,21 +80,26 @@ public class Monster : MonoBehaviour
                 }
                 else
                 {
-                    gameObject.SetActive(false);
+                    Destroy(gameObject);
                 }
             }
+
+            Debug.DrawRay(rb.position, runDirection * 1.5f, Color.red);
         }
         else if (inShadow && lighthouse != null)
         {
             shadowTimer += Time.fixedDeltaTime;
             if (shadowTimer >= shadowStayTime)
             {
-                Vector2 desiredDir = ((Vector2)returnTarget - position).normalized;
-                Vector2 newDir = TryFindEscapeDirection(position, desiredDir);
-
-                if (newDir == Vector2.zero)
-                    return;
-
+                StartMovingToLighthouse();
+            }
+        }
+        else if (lighthouse != null)
+        {
+            Vector2 desiredDir = ((Vector2)returnTarget - position).normalized;
+            Vector2 newDir = TryFindEscapeDirection(position, desiredDir);
+            if (newDir != Vector2.zero)
+            {
                 runDirection = newDir;
                 Vector2 nextPos = position + runDirection * runSpeed * Time.fixedDeltaTime;
                 rb.MovePosition(nextPos);
@@ -125,67 +107,97 @@ public class Monster : MonoBehaviour
                 float distToReturn = Vector2.Distance(nextPos, returnTarget);
                 if (distToReturn < 0.1f)
                 {
-                    inShadow = false;
-                    Debug.Log($"{gameObject.name} добежал до маяка!");
-                }
-            }
-        }
-        else
-        {
-            if (lighthouse != null)
-            {
-                Vector2 desiredDir = ((Vector2)returnTarget - position).normalized;
-                Vector2 newDir = TryFindEscapeDirection(position, desiredDir);
-
-                if (newDir != Vector2.zero)
-                {
-                    runDirection = newDir;
-                    Vector2 nextPos = position + runDirection * runSpeed * Time.fixedDeltaTime;
-                    rb.MovePosition(nextPos);
-
-                    float distToReturn = Vector2.Distance(nextPos, returnTarget);
-                    if (distToReturn < 0.1f)
-                    {
-                        Debug.Log($"{gameObject.name} добежал до маяка!");
-                        gameObject.SetActive(false);
-                    }
+                    Debug.Log($"{gameObject.name} РґРѕР±РµР¶Р°Р» РґРѕ РјР°СЏРєР°!");
+                    Destroy(gameObject);
                 }
             }
         }
     }
 
-        public void EscapeFrom(Transform lighthouseCenter)
+    Vector2 TryFindEscapeDirection(Vector2 currentPos, Vector2 desiredDir)
+    {
+        float maxAngle = 90f;
+        float angleStep = 5f;
+        float checkDistance = runSpeed * Time.fixedDeltaTime + 0.1f;
+
+
+        for (float angle = 0; angle <= maxAngle; angle += angleStep)
+        {
+            Vector2[] testDirs = new Vector2[]
+            {
+                Quaternion.Euler(0, 0, angle) * desiredDir,
+                Quaternion.Euler(0, 0, -angle) * desiredDir
+            };
+
+            foreach (var testDir in testDirs)
+            {
+                bool hitsObstacle = Physics2D.Raycast(currentPos, testDir, checkDistance, obstacleMask);
+                bool hitsLight = Physics2D.Raycast(currentPos, testDir, checkDistance, lightMask);
+
+                if (!hitsObstacle && !hitsLight)
+                    return testDir.normalized;
+
+            }
+        }
+
+
+
+        if (lighthouse != null)
+        {
+            Vector2 awayDir = (currentPos - (Vector2)lighthouse.position).normalized;
+            Vector2 sideStepDir = (panicSide > 0)
+                ? new Vector2(awayDir.y, -awayDir.x)
+                : new Vector2(-awayDir.y, awayDir.x);
+
+            return sideStepDir.normalized;
+        }
+
+        return Vector2.down;
+    }
+
+    void UpdateEscapeTarget()
+    {
+        Vector2 position = rb.position;
+
+        Collider2D shadowZone = FindClosestShadowZone(position);
+        Vector3 shadowPoint = shadowZone != null ? shadowZone.ClosestPoint(position) : position;
+
+        Vector2 dirAway = (position - (Vector2)lighthouse.position).normalized;
+        Vector3 radiusPoint = (Vector2)lighthouse.position + dirAway * escapeRadius;
+
+        bool shadowSafe = !Physics2D.Linecast(position, shadowPoint, lightMask);
+        bool radiusSafe = !Physics2D.Linecast(position, radiusPoint, lightMask);
+
+        if (shadowSafe && !radiusSafe)
+        {
+            escapeTarget = shadowPoint;
+        }
+        else if (!shadowSafe && radiusSafe)
+        {
+            escapeTarget = radiusPoint;
+        }
+        else if (shadowSafe && radiusSafe)
+        {
+            escapeTarget = (Vector3.Distance(position, shadowPoint) < Vector3.Distance(position, radiusPoint))
+                ? shadowPoint
+                : radiusPoint;
+        }
+        else
+        {
+
+            escapeTarget = position + dirAway * 2f;
+        }
+    }
+
+    public void EscapeFrom(Transform lighthouseCenter)
     {
         if (!escaping && !inShadow)
         {
             lighthouse = lighthouseCenter;
+            escaping = true;
 
-            Vector2 dirToLighthouse = (lighthouse.position - transform.position).normalized;
-            float distToLighthouse = Vector2.Distance(lighthouse.position, transform.position);
 
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, dirToLighthouse, distToLighthouse, obstacleMask);
-
-            if (hit.collider == null)
-            {
-                Vector3 offScreenPoint = GetClosestPointOutsideScreen(transform.position);
-                Collider2D shadowZone = FindClosestShadowZone(transform.position);
-                Vector3 shadowPoint = shadowZone != null ? shadowZone.ClosestPoint(transform.position) : transform.position;
-
-                float distToShadow = Vector3.Distance(transform.position, shadowPoint);
-                float distToOffScreen = Vector3.Distance(transform.position, offScreenPoint);
-
-                if (distToShadow < distToOffScreen)
-                    escapeTarget = shadowPoint;
-                else
-                    escapeTarget = offScreenPoint;
-
-                runDirection = ((Vector2)escapeTarget - rb.position).normalized;
-                escaping = true;
-            }
-            else
-            {
-                Debug.Log($"{gameObject.name} спрятался в тени!");
-            }
+            panicSide = Random.value > 0.5f ? 1 : -1;
         }
     }
 
@@ -217,39 +229,6 @@ public class Monster : MonoBehaviour
         Collider2D shadowZone = FindClosestShadowZone(position);
         if (shadowZone == null) return position;
         return shadowZone.ClosestPoint(position);
-    }
-
-    Vector3 GetClosestPointOutsideScreen(Vector3 pos)
-    {
-        Vector3 screenPos = mainCamera.WorldToViewportPoint(pos);
-
-        float leftDist = screenPos.x;
-        float rightDist = 1f - screenPos.x;
-        float bottomDist = screenPos.y;
-        float topDist = 1f - screenPos.y;
-
-        float minDist = Mathf.Min(leftDist, rightDist, bottomDist, topDist);
-
-        Vector3 targetViewportPos = screenPos;
-
-        if (minDist == leftDist)
-            targetViewportPos.x = -0.1f;
-        else if (minDist == rightDist)
-            targetViewportPos.x = 1.1f;
-        else if (minDist == bottomDist)
-            targetViewportPos.y = -0.1f;
-        else
-            targetViewportPos.y = 1.1f;
-
-        targetViewportPos.z = screenPos.z;
-
-        return mainCamera.ViewportToWorldPoint(targetViewportPos);
-    }
-
-    bool IsOutOfCameraView(Vector3 pos)
-    {
-        Vector3 viewportPos = mainCamera.WorldToViewportPoint(pos);
-        return viewportPos.x < 0f || viewportPos.x > 1f || viewportPos.y < 0f || viewportPos.y > 1f;
     }
 
     void OnDisable()
