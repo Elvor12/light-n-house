@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 public class ScenesManager : MonoBehaviour
 {
     public Camera firstCamera;
-    private Camera secondCamera;
+    public Camera secondCamera;
     private string secondScene = "MiniGame";
     void Start()
     {
@@ -14,6 +14,16 @@ public class ScenesManager : MonoBehaviour
         }
 
         LoadSecondScene();
+    }
+
+    public bool IsUsingFirstCamera()
+    {
+        return firstCamera != null && firstCamera.enabled;
+    }
+
+    public bool IsUsingSecondCamera()
+    {
+        return secondCamera != null && secondCamera.enabled;
     }
     void LoadSecondScene()
     {
@@ -49,6 +59,14 @@ public class ScenesManager : MonoBehaviour
         }
     }
 
+    public void SwitchToFirst()
+    {
+        if (firstCamera != null)
+        {
+            firstCamera.enabled = true;
+            secondCamera.enabled= false;
+        }
+    }
     void Update()
     {
         
