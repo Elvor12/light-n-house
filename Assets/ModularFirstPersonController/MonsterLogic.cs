@@ -534,7 +534,7 @@ public class MonsterLogic : MonoBehaviour
     private void SetLine() 
     {
         Vector3 startPos = transform.position;
-        Vector3 secondPos = startPos + smootheLookDirection.normalized * lineLenght;
+        Vector3 secondPos = startPos + shiftedLookDirection.normalized * lineLenght;
         linerender.positionCount = 2;
         linerender.SetPosition(0, startPos);
         linerender.SetPosition(1, secondPos);

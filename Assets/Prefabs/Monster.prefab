@@ -13,9 +13,9 @@ GameObject:
   - component: {fileID: 5696033144370055478}
   - component: {fileID: 184521181470973216}
   - component: {fileID: 6828239144946334532}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Monster
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -78,7 +78,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -175,6 +175,4 @@ MonoBehaviour:
   shadowZoneTag: ShadowZone
   shadowStayTime: 3
   escapeRadius: 10.1
-  lightDirection: {fileID: 0}
-  lightAngle: 30
   lighthouse: {fileID: 6270141360609327506, guid: 9774a8ffb553b614fadf6a6276ca21db, type: 3}
