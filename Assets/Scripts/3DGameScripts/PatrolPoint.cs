@@ -4,7 +4,7 @@ using UnityEngine.AI;
 public class PatrolPoint : MonoBehaviour
 {
     public float maxDistance = 1f;
-    public float radious = 7;
+    public float radious = 7f;
     public Vector3 position;
     private Transform pointTransform;
     private MonsterLogic monsterLogic;
@@ -23,6 +23,10 @@ public class PatrolPoint : MonoBehaviour
         else Debug.Log("There is no place for my dot");
         monsterLogic.targetPointPos = position;
     }
+    void OnEnable()
+    {
+        position = transform.position;
+    }
     void Update()
     {
         if (monsterLogic.targetPointPos == position && monsterLogic.interestPoint != this)
@@ -36,10 +40,28 @@ public class PatrolPoint : MonoBehaviour
                 }
             }
         }
+        if (monsterLogic.interestPoint == this)
+        {
+            if ((monsterTransform.position - position).sqrMagnitude > radious * radious)
+            {
+                monsterLogic.ClearPatrolPoint();
+                Debug.Log(monsterLogic.interestPointPos);
+            }
+        }
     }
     void OnDrawGizmos()
     {
-        Gizmos.DrawSphere(position, 0.3f);
+        Gizmos.DrawSphere(transform.position, 0.3f);
+
+        Gizmos.color = Color.yellow;
+
+        Matrix4x4 oldMatrix = Gizmos.matrix;
+
+        Gizmos.matrix = Matrix4x4.TRS(transform.position, Quaternion.identity, new Vector3(radious, 0.01f, radious));
+
+        Gizmos.DrawWireSphere(Vector3.zero, 1f);
+
+        Gizmos.matrix = oldMatrix;
     }
 }
 

@@ -8,6 +8,7 @@ public class MonsterLogic : MonoBehaviour
 {
 
     public GameObject mainTarget;
+    private PointsDatabase pDatabase;
     public float wanderDist = 10f;
     public float setWanderTimer = 100f;
     public float directionLenght = 5f;
@@ -23,7 +24,6 @@ public class MonsterLogic : MonoBehaviour
     public float timerForCaution = 0;
     public float timerForShifting = 0;
     private float angleForDirectionOffset = 0;
-    public float time = 0;
     public int shiftingTime = 3;
     private int cautionShiftingTime = 2;
     private int rightOrLeft = 1;
@@ -54,7 +54,6 @@ public class MonsterLogic : MonoBehaviour
     public PatrolPoint interestPoint;
 
     public LayerMask obstacleMask;
-
     public LayerMask playerMask;
 
     public float raycastAngle = 45;
@@ -65,6 +64,7 @@ public class MonsterLogic : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        pDatabase = FindAnyObjectByType<PointsDatabase>();
         targetPos = mainTarget.GetComponent<Transform>();
         agent = GetComponent<NavMeshAgent>();
         timer = setWanderTimer;
@@ -185,7 +185,16 @@ public class MonsterLogic : MonoBehaviour
     {
         if (settedTarget == null && !targetFollowed)
         {
-            if (interestPoint == null) interestPath = SetPathToPoint(targetPointPos, interestPath);
+
+            if (interestPoint != null) targetPointPos = Vector3.zero;
+            else if (targetPointPos == Vector3.zero)
+            {
+                targetPointPos = pDatabase.GetNewTarget();
+                Debug.Log($"New target{targetPointPos}");
+            }
+            
+            interestPath = SetPathToPoint(targetPointPos, interestPath);
+
             if (!agent.hasPath)
             {
                 timer -= Time.deltaTime;
@@ -401,7 +410,6 @@ public class MonsterLogic : MonoBehaviour
         float interpolationFactor = proportion * Time.deltaTime * 3f;
 
         if (goingToMid) {
-            Debug.Log("rotation");
             return Vector3.Slerp(startDirection, midDirection, interpolationFactor);
         }
         else
@@ -554,6 +562,11 @@ public class MonsterLogic : MonoBehaviour
         interestPoint = point;
         interestPointPos = interestPoint.position;
         }
+    }
+    public void ClearPatrolPoint()
+    {
+        interestPoint = null;
+        interestPointPos = Vector3.zero;
     }
 
     private void OnDrawGizmos()
