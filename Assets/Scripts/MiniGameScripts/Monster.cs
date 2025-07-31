@@ -8,6 +8,7 @@ public class Monster : MonoBehaviour
     [SerializeField] private string shadowZoneTag = "ShadowZone";
     [SerializeField] private float shadowStayTime = 3f;
     [SerializeField] private float escapeRadius = 15f;
+    [SerializeField] private float waitBetweenShadows = 1f;
 
     public Transform lighthouse;
 
@@ -17,12 +18,14 @@ public class Monster : MonoBehaviour
     private Rigidbody2D rb;
     private bool escaping = false;
     private bool inShadow = false;
+    private bool waitingInShadow = false;
 
     private Vector2 runDirection;
     private Vector2 escapeTarget;
     private Vector2 returnTarget;
 
     private float shadowTimer = 0f;
+    private float shadowWaitTimer = 0f;
     private int panicSide = 1;
 
     void Start()
@@ -35,6 +38,7 @@ public class Monster : MonoBehaviour
     {
         inShadow = false;
         escaping = false;
+        waitingInShadow = false;
         returnTarget = lighthouse.position;
 
         Vector2 position = rb.position;
@@ -76,6 +80,7 @@ public class Monster : MonoBehaviour
                     escaping = false;
                     inShadow = true;
                     shadowTimer = 0f;
+                    waitingInShadow = false;
                     returnTarget = lighthouse.position;
                 }
                 else
@@ -89,9 +94,21 @@ public class Monster : MonoBehaviour
         else if (inShadow && lighthouse != null)
         {
             shadowTimer += Time.fixedDeltaTime;
-            if (shadowTimer >= shadowStayTime)
+
+            if (!waitingInShadow && shadowTimer >= shadowStayTime)
             {
-                StartMovingToLighthouse();
+                waitingInShadow = true;
+                shadowWaitTimer = 0f;
+            }
+
+            if (waitingInShadow)
+            {
+                shadowWaitTimer += Time.fixedDeltaTime;
+                if (shadowWaitTimer >= waitBetweenShadows)
+                {
+                    waitingInShadow = false;
+                    StartMovingToLighthouse();
+                }
             }
         }
         else if (lighthouse != null)
@@ -120,7 +137,6 @@ public class Monster : MonoBehaviour
         float angleStep = 5f;
         float checkDistance = runSpeed * Time.fixedDeltaTime + 0.1f;
 
-
         for (float angle = 0; angle <= maxAngle; angle += angleStep)
         {
             Vector2[] testDirs = new Vector2[]
@@ -136,11 +152,8 @@ public class Monster : MonoBehaviour
 
                 if (!hitsObstacle && !hitsLight)
                     return testDir.normalized;
-
             }
         }
-
-
 
         if (lighthouse != null)
         {
@@ -184,7 +197,6 @@ public class Monster : MonoBehaviour
         }
         else
         {
-
             escapeTarget = position + dirAway * 2f;
         }
     }
@@ -195,8 +207,6 @@ public class Monster : MonoBehaviour
         {
             lighthouse = lighthouseCenter;
             escaping = true;
-
-
             panicSide = Random.value > 0.5f ? 1 : -1;
         }
     }

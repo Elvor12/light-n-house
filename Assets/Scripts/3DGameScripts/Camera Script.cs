@@ -1,5 +1,6 @@
 using System.Security;
 using UnityEditor;
+using UnityEditor.Rendering;
 using UnityEngine;
 
 public class CameraScript : MonoBehaviour
@@ -8,14 +9,17 @@ public class CameraScript : MonoBehaviour
     public LayerMask triggerObj;
     public ScenesManager manager;
     public LayerMask obstacle;
+    public LayerMask itemPickUp;
+    public LayerMask usableItemLayer;
     private int mask;
+    public Inventory inventory;
 
     Camera cam;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         cam = Camera.main;
-        mask = triggerObj.value | obstacle.value;
+        mask = triggerObj.value | obstacle.value | itemPickUp.value | usableItemLayer.value;
     }
 
     public bool CheckForTrigger()
@@ -28,6 +32,34 @@ public class CameraScript : MonoBehaviour
             {
                 manager.SwitchToSecond();
                 return true;
+            }
+
+            if ((1 << hit.collider.gameObject.layer) == itemPickUp.value)
+            {
+                GameObject target = hit.collider.gameObject;
+                ItemPickup pickup = target.GetComponent<ItemPickup>();
+                if (pickup != null)
+                {
+                    Inventory inventory = FindAnyObjectByType<Inventory>();
+                    if (inventory != null)
+                    {
+                        Debug.Log("Поднят айтем");
+                        pickup.PickUp(inventory);
+                        return true;
+                    }
+                }
+            }
+            if ((1 << hit.collider.gameObject.layer) == usableItemLayer.value)
+            {
+                GameObject target = hit.collider.gameObject;
+                foreach (Item item in inventory.items)
+                {
+                    if (item != null)
+                    {
+                        item.Use(target, inventory);
+                        return true;
+                    }
+                }
             }
         }
         return false;

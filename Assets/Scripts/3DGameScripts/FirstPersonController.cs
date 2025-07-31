@@ -390,7 +390,6 @@ public class FirstPersonController : MonoBehaviour
             if (scenesManager.IsUsingFirstCamera())
             {
                 playerCameraScript.CheckForTrigger();
-                Debug.Log("Switched to second camera");
             }
             else
             {

@@ -1,16 +1,23 @@
+using System.Collections.Generic;
 using UnityEngine;
+using static UnityEditor.Progress;
 
 public class Inventory : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public List<Item> items = new List<Item>();
+
+    public void AddItem(Item item)
     {
-        
+        items.Add(item);
+        Debug.Log("Добавлен предмет: " + item.itemName);
     }
 
-    // Update is called once per frame
-    void Update()
+    public void RemoveItem(Item item)
     {
-        
+        if (items.Contains(item))
+        {
+            items.Remove(item);
+            Debug.Log($"Удалён предмет: {item.itemName}");
+        }
     }
 }
