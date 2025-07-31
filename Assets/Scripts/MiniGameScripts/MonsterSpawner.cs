@@ -3,6 +3,7 @@ using UnityEngine;
 public class MonsterSpawner : MonoBehaviour
 {
     public GameObject monsterPrefab;
+    public GameObject root;
     public Transform[] spawnPoints;
     public float spawnInterval = 5f;
     public int maxMonsters = 10;
@@ -30,7 +31,7 @@ public class MonsterSpawner : MonoBehaviour
         else
             spawnPoint = transform;
 
-        GameObject monster = Instantiate(monsterPrefab, spawnPoint.position, Quaternion.identity);
+        GameObject monster = Instantiate(monsterPrefab, spawnPoint.position, Quaternion.identity, root.transform);
         currentMonsterCount++;
 
         Monster monsterScript = monster.GetComponent<Monster>();
