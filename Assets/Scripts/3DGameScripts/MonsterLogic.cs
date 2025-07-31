@@ -10,6 +10,7 @@ public class MonsterLogic : MonoBehaviour
     public GameObject mainTarget;
     private PointsDatabase pDatabase;
     public float wanderDist = 10f;
+    public float killingDistance = 5f;
     public float setWanderTimer = 100f;
     public float directionLenght = 5f;
     public LineRenderer linerender;
@@ -85,6 +86,20 @@ public class MonsterLogic : MonoBehaviour
         chaseTimer += Time.deltaTime;
         isLooking = false;
         NodeFixator();
+
+        if (Vector3.Distance(transform.position, targetPos.position) < killingDistance && ObserveCheck())
+        {
+            Debug.Log("check");
+            shiftingTime = 3;
+            focused = true;
+            settedTarget = null;
+            targetFollowed = false;
+            shiftedLookDirection = Vector3.zero;
+            smootheLookDirection = Vector3.zero;
+            transform.position = NavMeshPoint(pDatabase.GetNewTarget(), maxDistForTarget, -1);
+            agent.ResetPath();
+            agent.isStopped = true;
+        }
         UpdateViewDirection();
 
         UpdateChaseSetup();
@@ -139,7 +154,6 @@ public class MonsterLogic : MonoBehaviour
                     agent.path = path;
                     agent.isStopped = false;
                 }
-
                 shiftingTime = 3;
                 focused = true;
                 settedTarget = targetPos;
@@ -148,7 +162,7 @@ public class MonsterLogic : MonoBehaviour
             }
             else if (settedTarget == targetPos)
             {
-                if (targetLastTimeSeenPos != transform.position)
+                if (targetLastTimeSeenPos != Vector3.zero && targetLastTimeSeenPos != transform.position)
                 {
                     SetDestination(targetLastTimeSeenPos);
                     targetLastTimeSeen = true;
@@ -187,9 +201,9 @@ public class MonsterLogic : MonoBehaviour
         if (settedTarget == null && !targetFollowed)
         {
             interestPath = SetPathToPoint(targetPointPos, interestPath);
-            
+
             if (interestPoint != null) targetPointPos = Vector3.zero;
-            else if (targetPointPos == Vector3.zero)
+            if (interestPoint == null && targetPointPos == Vector3.zero)
             {
                 if (timerForResidence >= 30f)
                 {
@@ -236,7 +250,7 @@ public class MonsterLogic : MonoBehaviour
         
         if (agent.hasPath)
         {
-            if (settedTarget != null && targetFollowed)
+            if (targetFollowed)
             {
                 desiredLookDirection = settedTarget.position - currentPos;
             }
@@ -512,7 +526,7 @@ public class MonsterLogic : MonoBehaviour
         return path;
     }
 
-    private Vector3 NavMeshPoint(Vector3 originPos, float dist, int mask)
+    private static Vector3 NavMeshPoint(Vector3 originPos, float dist, int mask)
     {
         Vector3 randomPos = Random.insideUnitSphere * dist;
         randomPos += originPos;
