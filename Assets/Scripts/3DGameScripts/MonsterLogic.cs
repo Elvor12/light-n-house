@@ -23,6 +23,7 @@ public class MonsterLogic : MonoBehaviour
     public float viewTimer = 2f;
     public float timerForCaution = 0;
     public float timerForShifting = 0;
+    public float timerForResidence = 0;
     private float angleForDirectionOffset = 0;
     public int shiftingTime = 3;
     private int cautionShiftingTime = 2;
@@ -185,15 +186,23 @@ public class MonsterLogic : MonoBehaviour
     {
         if (settedTarget == null && !targetFollowed)
         {
-
+            interestPath = SetPathToPoint(targetPointPos, interestPath);
+            
             if (interestPoint != null) targetPointPos = Vector3.zero;
             else if (targetPointPos == Vector3.zero)
             {
-                targetPointPos = pDatabase.GetNewTarget();
-                Debug.Log($"New target{targetPointPos}");
+                if (timerForResidence >= 30f)
+                {
+                    targetPointPos = pDatabase.GetNewTarget();
+                    Debug.Log($"New target{targetPointPos}");
+                    timerForResidence = 0;
+                }
+            }
+            if (targetPointPos == Vector3.zero)
+            {
+                timerForResidence += Time.deltaTime;
             }
             
-            interestPath = SetPathToPoint(targetPointPos, interestPath);
 
             if (!agent.hasPath)
             {
