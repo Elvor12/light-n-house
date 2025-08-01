@@ -43,7 +43,6 @@ public class CameraScript : MonoBehaviour
                     Inventory inventory = FindAnyObjectByType<Inventory>();
                     if (inventory != null)
                     {
-                        Debug.Log("Поднят айтем");
                         pickup.PickUp(inventory);
                         return true;
                     }

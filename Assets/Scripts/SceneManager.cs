@@ -5,6 +5,8 @@ public class ScenesManager : MonoBehaviour
 {
     public Camera firstCamera;
     public Camera secondCamera;
+    public GameManager gameManager;
+    public GameManagerMiniGame gameManagerMiniGame;
     private string secondScene = "MiniGame";
     void Start()
     {
@@ -45,6 +47,12 @@ public class ScenesManager : MonoBehaviour
                         secondCamera.enabled = false;
                         break;
                     }
+                    
+                }
+                foreach (var obj in objs)
+                {
+                    GameManagerMiniGame manager = obj.GetComponentInChildren<GameManagerMiniGame>();
+                    if (manager != null) gameManagerMiniGame = manager;
                 }
             }
         };
@@ -52,10 +60,11 @@ public class ScenesManager : MonoBehaviour
 
     public void SwitchToSecond()
     {
-        if (secondCamera != null)
+        if (secondCamera != null && gameManager.monstersArriving)
         {
             firstCamera.enabled = false;
             secondCamera.enabled = true;
+            gameManagerMiniGame.StartMiniGame();        
         }
     }
 
@@ -64,7 +73,8 @@ public class ScenesManager : MonoBehaviour
         if (firstCamera != null)
         {
             firstCamera.enabled = true;
-            secondCamera.enabled= false;
+            secondCamera.enabled = false;
+            gameManager.IsMiniGameCleared(gameManagerMiniGame.StopMiniGame());
         }
     }
     void Update()

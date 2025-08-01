@@ -3,11 +3,15 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 
 public class MonsterLogic : MonoBehaviour
 {
 
     public GameObject mainTarget;
+    public FirstPersonController playerScript;
+
+    public Text text;
     private PointsDatabase pDatabase;
     public float wanderDist = 10f;
     public float killingDistance = 5f;
@@ -68,6 +72,7 @@ public class MonsterLogic : MonoBehaviour
     {
         pDatabase = FindAnyObjectByType<PointsDatabase>();
         targetPos = mainTarget.GetComponent<Transform>();
+        playerScript = mainTarget.GetComponent<FirstPersonController>();
         agent = GetComponent<NavMeshAgent>();
         timer = setWanderTimer;
         path = new();
@@ -99,6 +104,9 @@ public class MonsterLogic : MonoBehaviour
             transform.position = NavMeshPoint(pDatabase.GetNewTarget(), maxDistForTarget, -1);
             agent.ResetPath();
             agent.isStopped = true;
+
+            playerScript.healthBar -= 1;
+            text.text = playerScript.healthBar.ToString();
         }
         UpdateViewDirection();
 
