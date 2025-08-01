@@ -77,6 +77,13 @@ public class ScenesManager : MonoBehaviour
             gameManager.IsMiniGameCleared(gameManagerMiniGame.StopMiniGame());
         }
     }
+    public void InMiniGameCheck()
+    {
+        if (secondCamera.enabled == true)
+        {
+            SwitchToFirst();
+        }
+    }
     void Update()
     {
         

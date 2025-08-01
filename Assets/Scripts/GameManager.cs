@@ -1,11 +1,12 @@
 using UnityEngine;
-
+using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     public float timerForActivatingMiniGame;
     public float timerForGameOverMiniGame;
     public FirstPersonController player;
     public ScenesManager sceneManager;
+    public Image mark;
     public bool monstersArriving = false;
     void Start()
     {
@@ -19,6 +20,7 @@ public class GameManager : MonoBehaviour
         timerForActivatingMiniGame += Time.deltaTime;
         if (timerForActivatingMiniGame >= 20f && sceneManager.IsUsingFirstCamera())
         {
+            mark.gameObject.SetActive(true);
             monstersArriving = true;
             timerForGameOverMiniGame += Time.deltaTime;
         }
@@ -34,6 +36,7 @@ public class GameManager : MonoBehaviour
             timerForActivatingMiniGame = 0;
             timerForGameOverMiniGame = 0;
             monstersArriving = false;
+            mark.gameObject.SetActive(false);
         }
     }
 }

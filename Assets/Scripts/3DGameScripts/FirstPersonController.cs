@@ -25,6 +25,9 @@ public class FirstPersonController : MonoBehaviour
     private Rigidbody rb;
     public int healthBar = 3;
     private bool gameOver = false;
+    private bool lockedOnMonster = false;
+    private Vector3 monsterPos;
+    public MonsterLogic monsterLogic;
 
     #region Camera Movement Variables
 
@@ -225,7 +228,18 @@ public class FirstPersonController : MonoBehaviour
         #region Camera
 
         // Control camera movement
-        if (cameraCanMove)
+        if (lockedOnMonster)
+        {
+            Vector3 direction = (monsterPos - transform.position).normalized;
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime);
+            if (Quaternion.Angle(transform.rotation, targetRotation) < 5f)
+            {
+                UnlockedMonster();
+                monsterLogic.Teleport();
+            }
+        }
+        else if (cameraCanMove)
         {
             yaw = transform.localEulerAngles.y + Input.GetAxis("Mouse X") * mouseSensitivity;
 
@@ -292,7 +306,7 @@ public class FirstPersonController : MonoBehaviour
         #endregion
         #endregion
 
-        if (scenesManager.IsUsingFirstCamera() && !gameOver)
+        if (scenesManager.IsUsingFirstCamera() && !gameOver && !lockedOnMonster)
         {
 
             #region Sprint
@@ -405,7 +419,7 @@ public class FirstPersonController : MonoBehaviour
 
         CheckGround();
 
-        if (enableHeadBob && !gameOver)
+        if (enableHeadBob && !gameOver && !lockedOnMonster)
         {
             HeadBob();
         }
@@ -417,7 +431,7 @@ public class FirstPersonController : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (scenesManager.IsUsingFirstCamera() && !gameOver)
+        if (scenesManager.IsUsingFirstCamera() && !gameOver && !lockedOnMonster)
         {
             #region Movement
 
@@ -565,6 +579,16 @@ public class FirstPersonController : MonoBehaviour
             timer = 0;
             joint.localPosition = new Vector3(Mathf.Lerp(joint.localPosition.x, jointOriginalPos.x, Time.deltaTime * bobSpeed), Mathf.Lerp(joint.localPosition.y, jointOriginalPos.y, Time.deltaTime * bobSpeed), Mathf.Lerp(joint.localPosition.z, jointOriginalPos.z, Time.deltaTime * bobSpeed));
         }
+    }
+    public void LockedOnMonster(Vector3 pos)
+    {
+        lockedOnMonster = true;
+        monsterPos = pos;
+    }
+    private void UnlockedMonster()
+    {
+        lockedOnMonster = false;
+        monsterPos = Vector3.zero;
     }
 
     public void GameOver()

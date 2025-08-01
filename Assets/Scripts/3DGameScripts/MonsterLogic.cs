@@ -10,6 +10,7 @@ public class MonsterLogic : MonoBehaviour
 
     public GameObject mainTarget;
     public FirstPersonController playerScript;
+    public ScenesManager scenesManager;
 
     public Text text;
     private PointsDatabase pDatabase;
@@ -48,6 +49,7 @@ public class MonsterLogic : MonoBehaviour
     private bool goingToMid = false;
     private bool goingToMidForShifting = false;
     private bool caution = false;
+    private bool freeze = false;
 
     private Vector3 offsetDirection = Vector3.zero;
     private Vector3 targetLastTimeSeenPos = Vector3.zero;
@@ -92,31 +94,38 @@ public class MonsterLogic : MonoBehaviour
         isLooking = false;
         NodeFixator();
 
-        if (Vector3.Distance(transform.position, targetPos.position) < killingDistance && ObserveCheck())
+        if (!freeze)
         {
-            Debug.Log("check");
-            shiftingTime = 3;
-            focused = true;
-            settedTarget = null;
-            targetFollowed = false;
-            shiftedLookDirection = Vector3.zero;
-            smootheLookDirection = Vector3.zero;
-            transform.position = NavMeshPoint(pDatabase.GetNewTarget(), maxDistForTarget, -1);
-            agent.ResetPath();
-            agent.isStopped = true;
+            if (Vector3.Distance(transform.position, targetPos.position) < killingDistance && ObserveCheck())
+            {
+                Debug.Log("check");
+                shiftingTime = 3;
+                focused = true;
+                settedTarget = null;
+                targetFollowed = false;
+                shiftedLookDirection = Vector3.zero;
+                smootheLookDirection = Vector3.zero;
+                agent.ResetPath();
+                freeze = true;
 
-            playerScript.healthBar -= 1;
-            text.text = playerScript.healthBar.ToString();
+                playerScript.LockedOnMonster(transform.position);
+                playerScript.healthBar -= 1;
+                text.text = playerScript.healthBar.ToString();
+                scenesManager.InMiniGameCheck();
+
+            }
+        
+            UpdateViewDirection();
+
+            UpdateChaseSetup();
+
+            if (targetPointPos != Vector3.zero)
+            {
+                UpdateWanderSetup(targetPointPos);
+            }
+            else UpdateWanderSetup();
         }
-        UpdateViewDirection();
-
-        UpdateChaseSetup();
-
-        if (targetPointPos != Vector3.zero)
-        {
-            UpdateWanderSetup(targetPointPos);
-        }
-        else UpdateWanderSetup();
+        
 
         SetLine();
         if (caution)
@@ -598,6 +607,11 @@ public class MonsterLogic : MonoBehaviour
     {
         interestPoint = null;
         interestPointPos = Vector3.zero;
+    }
+    public void Teleport()
+    {
+        transform.position = NavMeshPoint(pDatabase.GetNewTarget(), maxDistForTarget, -1);
+        freeze = false;
     }
 
     private void OnDrawGizmos()
