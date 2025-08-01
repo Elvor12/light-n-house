@@ -460,7 +460,7 @@ public class FirstPersonController : MonoBehaviour
         {
             HeadBob();
         }
-        if (healthBar == 0)
+        if (healthBar <= 0)
         {
             GameOver();
         }
