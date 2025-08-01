@@ -1,13 +1,18 @@
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManagerMiniGame : MonoBehaviour
 {
     public MonsterSpawner monsterSpawner;
+
+    private ScenesManager scenesManager;
+    private FirstPersonController player;
     void Start()
     {
         monsterSpawner = FindAnyObjectByType<MonsterSpawner>();
-    }
+
+}
 
     // Update is called once per frame
     void Update()
@@ -31,5 +36,17 @@ public class GameManagerMiniGame : MonoBehaviour
             Destroy(monster.gameObject);
         }
         return monsterSpawner.remainedMonsters == 0;
+    }
+    
+    public void LoseMiniGame()
+    {
+        scenesManager = FindAnyObjectByType<ScenesManager>();
+        player = FindAnyObjectByType<FirstPersonController>();
+        if (scenesManager.IsUsingSecondCamera())
+        {
+            scenesManager.SwitchToFirst();
+            player.GameOver();
+
+        }
     }
 }

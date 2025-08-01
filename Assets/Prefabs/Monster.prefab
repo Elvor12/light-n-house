@@ -175,4 +175,6 @@ MonoBehaviour:
   shadowZoneTag: ShadowZone
   shadowStayTime: 3
   escapeRadius: 10.1
+  waitBetweenShadows: 1
   lighthouse: {fileID: 6270141360609327506, guid: 9774a8ffb553b614fadf6a6276ca21db, type: 3}
+  GameManager: {fileID: 5821243346979213501, guid: f0254e425bc961943832712d1f26d59f, type: 3}

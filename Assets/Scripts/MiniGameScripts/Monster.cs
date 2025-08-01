@@ -11,6 +11,7 @@ public class Monster : MonoBehaviour
     [SerializeField] private float waitBetweenShadows = 1f;
 
     public Transform lighthouse;
+    public GameManagerMiniGame GameManager;
 
     public delegate void MonsterDestroyed();
     public event MonsterDestroyed OnMonsterDestroyed;
@@ -125,6 +126,7 @@ public class Monster : MonoBehaviour
                 if (distToReturn < 0.1f)
                 {
                     Debug.Log($"{gameObject.name} добежал до маяка!");
+                    GameManager.LoseMiniGame();
                     Destroy(gameObject);
                 }
             }

@@ -11,6 +11,8 @@ using UnityEngine.UI;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.SceneManagement;
 using System.Data;
+using static UnityEngine.GraphicsBuffer;
+
 
 
 
@@ -28,6 +30,7 @@ public class FirstPersonController : MonoBehaviour
     private bool lockedOnMonster = false;
     private Vector3 monsterPos;
     public MonsterLogic monsterLogic;
+    private Inventory inventory;
 
     #region Camera Movement Variables
 
@@ -174,6 +177,9 @@ public class FirstPersonController : MonoBehaviour
 
     void Start()
     {
+
+        inventory = FindAnyObjectByType<Inventory>();
+
         if (lockCursor)
         {
             Cursor.lockState = CursorLockMode.Locked;
@@ -222,6 +228,36 @@ public class FirstPersonController : MonoBehaviour
     }
 
     float camRotation;
+
+
+    private Coroutine regenCoroutine;
+
+    public void RegenerateSprint(float speed)
+    {
+        if (regenCoroutine != null) return;
+
+        float restoreAmount = Mathf.Clamp(sprintDuration - sprintRemaining, 0, sprintDuration);
+        regenCoroutine = StartCoroutine(SprintRegenRoutine(speed, restoreAmount));
+    }
+
+    private IEnumerator SprintRegenRoutine(float speed, float restoreAmount)
+    {
+        Debug.Log("Regen Speed");
+
+        float restored = 0f;
+
+        while (restored < restoreAmount)
+        {
+            float delta = Time.deltaTime * speed;
+            restored += delta;
+            sprintRemaining = Mathf.Clamp(sprintRemaining + delta, 0, sprintDuration);
+            yield return null;
+        }
+
+        regenCoroutine = null;
+    }
+
+
 
     private void Update()
     {
@@ -329,18 +365,6 @@ public class FirstPersonController : MonoBehaviour
                         }
                     }
                 }
-                else
-                {
-                    // Regain sprint while not sprinting
-                    if (isSprintCooldown)
-                    {
-                        sprintRemaining = Mathf.Clamp(sprintRemaining += Time.deltaTime * .3f, 0, sprintDuration);
-                    }
-                    else
-                    {
-                        sprintRemaining = Mathf.Clamp(sprintRemaining += Time.deltaTime, 0, sprintDuration);
-                    }
-                }
 
                 // Handles sprint cooldown 
                 // When sprint remaining == 0 stops sprint ability until hitting cooldown
@@ -413,6 +437,19 @@ public class FirstPersonController : MonoBehaviour
             {
                 scenesManager.SwitchToFirst();
                 Debug.Log("Switched to first camera");
+            }
+        }
+
+        if (Input.GetKey(KeyCode.I))
+        {
+            foreach (Item item in inventory.items)
+            {
+                if (item.itemName == "Inhaler")
+                {
+                    GameObject target = GameObject.Find("Enemy"); ;
+                    item.Use(target, inventory);
+                    break;
+                }
             }
         }
 
@@ -580,6 +617,12 @@ public class FirstPersonController : MonoBehaviour
             joint.localPosition = new Vector3(Mathf.Lerp(joint.localPosition.x, jointOriginalPos.x, Time.deltaTime * bobSpeed), Mathf.Lerp(joint.localPosition.y, jointOriginalPos.y, Time.deltaTime * bobSpeed), Mathf.Lerp(joint.localPosition.z, jointOriginalPos.z, Time.deltaTime * bobSpeed));
         }
     }
+
+    public void Heal()
+    {
+        healthBar++;
+        Debug.Log(healthBar);
+    }
     public void LockedOnMonster(Vector3 pos)
     {
         lockedOnMonster = true;
@@ -594,6 +637,7 @@ public class FirstPersonController : MonoBehaviour
     public void GameOver()
     {
         gameOver = true;
+        Debug.Log("Слил катку");
     }
 }
 

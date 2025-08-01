@@ -94,6 +94,8 @@ public class MonsterLogic : MonoBehaviour
         isLooking = false;
         NodeFixator();
 
+        text.text = playerScript.healthBar.ToString();
+
         if (!freeze)
         {
             if (Vector3.Distance(transform.position, targetPos.position) < killingDistance && ObserveCheck())
@@ -110,7 +112,6 @@ public class MonsterLogic : MonoBehaviour
 
                 playerScript.LockedOnMonster(transform.position);
                 playerScript.healthBar -= 1;
-                text.text = playerScript.healthBar.ToString();
                 scenesManager.InMiniGameCheck();
 
             }

@@ -12,12 +12,14 @@ public class CameraScript : MonoBehaviour
     public LayerMask itemPickUp;
     public LayerMask usableItemLayer;
     private int mask;
+    private FirstPersonController player;
     public Inventory inventory;
 
     Camera cam;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        player = FindAnyObjectByType<FirstPersonController>();
         cam = Camera.main;
         mask = triggerObj.value | obstacle.value | itemPickUp.value | usableItemLayer.value;
     }
@@ -38,12 +40,22 @@ public class CameraScript : MonoBehaviour
             {
                 GameObject target = hit.collider.gameObject;
                 ItemPickup pickup = target.GetComponent<ItemPickup>();
+                if (pickup.item.itemName == "Petard")
+                {
+                    pickup.Heal(player);
+                    pickup.Destroy();
+                    return true;
+                }
                 if (pickup != null)
                 {
                     Inventory inventory = FindAnyObjectByType<Inventory>();
                     if (inventory != null)
                     {
                         pickup.PickUp(inventory);
+                        if (pickup.item.itemName != "Fuse")
+                        {
+                            pickup.Destroy();
+                        }
                         return true;
                     }
                 }

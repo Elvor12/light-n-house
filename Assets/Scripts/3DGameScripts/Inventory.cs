@@ -20,4 +20,16 @@ public class Inventory : MonoBehaviour
             Debug.Log($"Óהאכ¸ם ןנוהלוע: {item.itemName}");
         }
     }
+
+    public bool HasItem(string item)
+    {
+        foreach (Item item2 in items)
+        {
+            if (item2.itemName == item)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 }
