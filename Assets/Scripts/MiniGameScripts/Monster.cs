@@ -32,7 +32,11 @@ public class Monster : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        if (lighthouse != null) StartMovingToLighthouse();
+        if (lighthouse != null)
+        {
+            Debug.Log($"StartMovingToLighthouse: newDir =");
+            StartMovingToLighthouse();
+        }
     }
 
     void StartMovingToLighthouse()
@@ -130,6 +134,11 @@ public class Monster : MonoBehaviour
                     Destroy(gameObject);
                 }
             }
+        }
+
+        if (runDirection.sqrMagnitude > 0.001f)
+        {
+            transform.right = runDirection;
         }
     }
 

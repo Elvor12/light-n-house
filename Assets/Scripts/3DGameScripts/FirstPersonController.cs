@@ -12,6 +12,7 @@ using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.SceneManagement;
 using System.Data;
 using static UnityEngine.GraphicsBuffer;
+using TMPro;
 
 
 
@@ -37,6 +38,8 @@ public class FirstPersonController : MonoBehaviour
     private AudioSource sound;
     public AudioClip inhale;
     public Image menu;
+    public Image gameOverScreen;
+    public Text text;
 
     #region Camera Movement Variables
 
@@ -183,7 +186,7 @@ public class FirstPersonController : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(CoroutineForMenu(0, 1, true));
+        StartCoroutine(CoroutineForMenu(menu, 0, 1, true));
         sound = GetComponent<AudioSource>();
         sound.clip = inhale;
 
@@ -235,16 +238,16 @@ public class FirstPersonController : MonoBehaviour
 
         #endregion
     }
-    IEnumerator CoroutineForMenu(float start, float end, bool plus)
+    IEnumerator CoroutineForMenu(Image image, float start, float end, bool plus)
     {
-        Color color = menu.color;
+        Color color = image.color;
         color.a = start;
-        while (menu.color.a != end)
+        while (image.color.a != end)
         {
             if (plus) color.a += Time.deltaTime * 0.5f;
             else color.a -= Time.deltaTime * 0.5f;
             color.a = Mathf.Clamp01(color.a);
-            menu.color = color;
+            image.color = color;
 
             yield return null;
         }
@@ -390,7 +393,7 @@ public class FirstPersonController : MonoBehaviour
                                 Debug.Log("Still replay");
                                 sound.Play();
                             }
-                            
+
                         }
                     }
                 }
@@ -484,14 +487,14 @@ public class FirstPersonController : MonoBehaviour
         if (menu.color.a == 1f)
         {
             if (Input.GetKey(KeyCode.E))
-                StartCoroutine(CoroutineForMenu(1, 0, false));
+                StartCoroutine(CoroutineForMenu(menu, 1, 0, false));
         }
         //Это должно быть только разово при заходе в другую зону
-            if (InZoneFlag)
-            {
-                gameManager.CalculateUpperTimer();
-                InZoneFlag = false;
-            }
+        if (InZoneFlag)
+        {
+            gameManager.CalculateUpperTimer();
+            InZoneFlag = false;
+        }
 
 
         CheckGround();
@@ -503,6 +506,12 @@ public class FirstPersonController : MonoBehaviour
         if (healthBar <= 0)
         {
             GameOver();
+        }
+        if (gameOver)
+        {
+            Color color = text.color;
+            color.a = gameOverScreen.color.a;
+            text.color = color;
         }
     }
 
@@ -694,6 +703,7 @@ public class FirstPersonController : MonoBehaviour
     {
         gameOver = true;
         Debug.Log(GetClosestPatrolPoint().position);
+        StartCoroutine(CoroutineForMenu(gameOverScreen, 0, 1, true));
     }
 }
 

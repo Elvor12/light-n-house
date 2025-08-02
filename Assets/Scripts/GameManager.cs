@@ -31,7 +31,11 @@ public class GameManager : MonoBehaviour
         timerForchangingInterestPoint += Time.deltaTime;
 
         timerForActivatingMiniGame += Time.deltaTime;
+<<<<<<< HEAD
         if (timerForActivatingMiniGame >= 20f && sceneManager.IsUsingFirstCamera())
+=======
+        if (timerForActivatingMiniGame >= 10f && sceneManager.IsUsingFirstCamera())
+>>>>>>> 6aacf6cc754c384e1633c77476d056aacd6d2b5c
         {
             if (!firstSoundStarted && !sound.isPlaying) ActivateFirstSound();
             mark.gameObject.SetActive(true);
