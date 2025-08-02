@@ -81,18 +81,88 @@ public class MonsterLogic : MonoBehaviour
         interestPath = new();
         //interestPoint = targetPos.position;
     }
-
+    private Vector3 lastPosition = Vector3.zero;
+    private float stuckTimer = 0f;
+    private float stuckThreshold = 2f; // Время для определения застревания
+    private float stuckDistanceThreshold = 0.3f;
     // Update is called once per frame
     //void FixedUpdate()
     //{
     //    agent.SetDestination(targetPos.position);
     //}
+    private void CheckForStuck()
+    {
+        if (agent.hasPath && !agent.isStopped)
+        {
+            float distanceMoved = Vector3.Distance(transform.position, lastPosition);
 
+            if (distanceMoved < stuckDistanceThreshold)
+            {
+                stuckTimer += Time.deltaTime;
+
+                if (stuckTimer > stuckThreshold)
+                {
+                    Debug.Log("Monster stuck! Micro-teleporting...");
+                    MicroTeleport();
+                }
+            }
+            else
+            {
+                // Сбросить таймер если движемся
+                stuckTimer = 0f;
+            }
+        }
+        else
+        {
+            // Если нет пути или остановлен, сбросить таймер
+            stuckTimer = 0f;
+        }
+
+        lastPosition = transform.position;
+    }
+    private void MicroTeleport()
+    {
+        // Попробовать найти ближайшую свободную точку
+        for (int i = 0; i < 8; i++)
+        {
+            float angle = i * 45f; // 8 направлений по 45 градусов
+            Vector3 direction = Quaternion.Euler(0, angle, 0) * Vector3.forward;
+            Vector3 teleportPos = transform.position + direction * 2f; // Микро-смещение на 2 единицы
+
+            if (NavMesh.SamplePosition(teleportPos, out NavMeshHit hit, 3f, -1))
+            {
+                // Проверить, что точка доступна
+                if (agent.CalculatePath(hit.position, path) && path.status == NavMeshPathStatus.PathComplete)
+                {
+                    transform.position = hit.position;
+                    agent.ResetPath();
+                    agent.isStopped = true;
+                    timer = 0f; // Заставить найти новую цель
+                    stuckTimer = 0f;
+                    Debug.Log($"Micro-teleported to: {hit.position}");
+                    return;
+                }
+            }
+        }
+
+        // Если не нашли подходящую точку, попробовать случайное направление
+        Vector3 randomPos = transform.position + Random.insideUnitSphere * 3f;
+        if (NavMesh.SamplePosition(randomPos, out NavMeshHit randomHit, 5f, -1))
+        {
+            transform.position = randomHit.position;
+            agent.ResetPath();
+            agent.isStopped = true;
+            timer = 0f;
+            stuckTimer = 0f;
+            Debug.Log($"Random micro-teleported to: {randomHit.position}");
+        }
+    }
     void Update()
     {
         chaseTimer += Time.deltaTime;
         isLooking = false;
         NodeFixator();
+        CheckForStuck();
 
         text.text = playerScript.healthBar.ToString();
 
@@ -503,7 +573,7 @@ public class MonsterLogic : MonoBehaviour
     }
     private Vector3 ValidNavMeshPoint(Vector3 originPos, float dist, int mask, float maxPathLenght, float minDist, NavMeshAgent agent, Vector3 interest)
     {
-        int tries = 10;
+        int tries = 1000;
         for (int i = 0; i <= tries; i++)
         {
             Vector3 point = NavMeshPoint(originPos, dist, mask);
