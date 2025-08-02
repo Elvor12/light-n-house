@@ -34,6 +34,10 @@ public class FirstPersonController : MonoBehaviour
     public bool InZoneFlag = false;
     public PatrolPoint currentPatrolPoint = null;
 
+    private AudioSource sound;
+    public AudioClip inhale;
+    public Image menu;
+
     #region Camera Movement Variables
 
     private ScenesManager scenesManager;
@@ -179,6 +183,9 @@ public class FirstPersonController : MonoBehaviour
 
     void Start()
     {
+        StartCoroutine(CoroutineForMenu(0, 1, true));
+        sound = GetComponent<AudioSource>();
+        sound.clip = inhale;
 
         inventory = FindAnyObjectByType<Inventory>();
 
@@ -228,8 +235,21 @@ public class FirstPersonController : MonoBehaviour
 
         #endregion
     }
+    IEnumerator CoroutineForMenu(float start, float end, bool plus)
+    {
+        Color color = menu.color;
+        color.a = start;
+        while (menu.color.a != end)
+        {
+            if (plus) color.a += Time.deltaTime * 0.5f;
+            else color.a -= Time.deltaTime * 0.5f;
+            color.a = Mathf.Clamp01(color.a);
+            menu.color = color;
 
-    float camRotation;
+            yield return null;
+        }
+        
+    }
 
 
     private Coroutine regenCoroutine;
@@ -364,6 +384,13 @@ public class FirstPersonController : MonoBehaviour
                         {
                             isSprinting = false;
                             isSprintCooldown = true;
+
+                            if (!sound.isPlaying)
+                            {
+                                Debug.Log("Still replay");
+                                sound.Play();
+                            }
+                            
                         }
                     }
                 }
@@ -454,12 +481,17 @@ public class FirstPersonController : MonoBehaviour
                 }
             }
         }
-        //Это должно быть только разово при заходе в другую зону
-        if (InZoneFlag)
+        if (menu.color.a == 1f)
         {
-            gameManager.CalculateUpperTimer();
-            InZoneFlag = false;
+            if (Input.GetKey(KeyCode.E))
+                StartCoroutine(CoroutineForMenu(1, 0, false));
         }
+        //Это должно быть только разово при заходе в другую зону
+            if (InZoneFlag)
+            {
+                gameManager.CalculateUpperTimer();
+                InZoneFlag = false;
+            }
 
 
         CheckGround();
@@ -480,7 +512,7 @@ public class FirstPersonController : MonoBehaviour
         {
             #region Movement
 
-            if (playerCanMove)
+            if (playerCanMove && !sound.isPlaying)
             {
                 // Calculate how fast we should be moving
                 Vector3 targetVelocity = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
@@ -512,6 +544,7 @@ public class FirstPersonController : MonoBehaviour
                 else
                 {
                     isSprinting = false;
+
 
                     if (hideBarWhenFull && sprintRemaining == sprintDuration)
                     {

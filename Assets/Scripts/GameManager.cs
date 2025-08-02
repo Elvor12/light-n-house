@@ -12,10 +12,15 @@ public class GameManager : MonoBehaviour
     public MonsterLogic monsterLogic;
     public ScenesManager sceneManager;
     public Image mark;
+    private AudioSource sound;
+    public AudioClip firstSound;
+    public AudioClip secondSound;
+    public bool firstSoundStarted;
+
     public bool monstersArriving = false;
     void Start()
     {
-
+        sound = GetComponent<AudioSource>();
     }
 
     // Это хаб таймеров))) Тут вроде все понятно. Если миниигра пройдена то таймер обнуляется.
@@ -26,28 +31,58 @@ public class GameManager : MonoBehaviour
         timerForchangingInterestPoint += Time.deltaTime;
 
         timerForActivatingMiniGame += Time.deltaTime;
-        if (timerForActivatingMiniGame >= 100f && sceneManager.IsUsingFirstCamera())
+        if (timerForActivatingMiniGame >= 20f && sceneManager.IsUsingFirstCamera())
         {
+            if (!firstSoundStarted && !sound.isPlaying) ActivateFirstSound();
             mark.gameObject.SetActive(true);
             monstersArriving = true;
             timerForGameOverMiniGame += Time.deltaTime;
         }
+        
         if (timerForGameOverMiniGame >= 20f)
         {
+            sound.enabled = false;
             player.GameOver();
         }
         if (timerForchangingInterestPoint >= globalMovedBoard)
         {
+            firstSoundStarted = false;
             monsterLogic.targetPointPos = player.GetClosestPatrolPoint().position;
             monsterLogic.timerForResidence = 0;
             timerForchangingInterestPoint = 0;
             globalMovedBoard = globalBoard;
         }
+        if (firstSoundStarted && !sound.isPlaying)
+        {
+            sound.loop = true;
+            sound.clip = secondSound;
+            sound.Play();
+            
+        }
+        if (!sceneManager.IsUsingFirstCamera())
+        {
+            sound.Stop();
+        }
+        else if (sound.clip != null && !sound.isPlaying)
+        {
+            sound.clip = secondSound;
+            sound.Play();
+        }
+    }
+    public void ActivateFirstSound()
+    {
+        firstSoundStarted = true;
+        sound.clip = firstSound;
+        sound.loop = false;
+        sound.Play();
+
     }
     public void IsMiniGameCleared(bool isIt)
     {
         if (isIt)
         {
+            sound.loop = false;
+            sound.clip = null;
             timerForActivatingMiniGame = 0;
             timerForGameOverMiniGame = 0;
             monstersArriving = false;

@@ -7,6 +7,8 @@ using UnityEngine.UI;
 
 public class MonsterLogic : MonoBehaviour
 {
+    private AudioSource sound;
+    public AudioClip steps;
 
     public GameObject mainTarget;
     public FirstPersonController playerScript;
@@ -74,6 +76,7 @@ public class MonsterLogic : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        sound = GetComponent<AudioSource>();
         pDatabase = FindAnyObjectByType<PointsDatabase>();
         targetPos = mainTarget.GetComponent<Transform>();
         playerScript = mainTarget.GetComponent<FirstPersonController>();
@@ -104,6 +107,7 @@ public class MonsterLogic : MonoBehaviour
         {
             if (Vector3.Distance(transform.position, targetPos.position) < killingDistance && ObserveCheck())
             {
+                sound.clip = null;
                 shiftingTime = 3;
                 focused = true;
                 settedTarget = null;
@@ -117,6 +121,7 @@ public class MonsterLogic : MonoBehaviour
                 playerScript.healthBar -= 1;
                 scenesManager.InMiniGameCheck();
 
+
             }
 
             UpdateViewDirection();
@@ -129,6 +134,18 @@ public class MonsterLogic : MonoBehaviour
             }
             else UpdateWanderSetup();
 
+            if (!sound.isPlaying && agent.velocity.sqrMagnitude > 2f)
+            {
+                sound.clip = steps;
+                sound.Play();
+            }
+            if (sound.isPlaying)
+            {
+                float distance = Vector3.Distance(targetPos.position, transform.position);
+                float fixedDist = Mathf.Clamp(distance, 0, 10);
+                Debug.Log(fixedDist);
+                sound.volume = 1 - Mathf.Clamp01(fixedDist / 10);
+            }
            
         }
         
