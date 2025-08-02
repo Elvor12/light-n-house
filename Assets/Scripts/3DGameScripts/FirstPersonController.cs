@@ -637,7 +637,6 @@ public class FirstPersonController : MonoBehaviour
     public void GameOver()
     {
         gameOver = true;
-        Debug.Log("Слил катку");
     }
 }
 

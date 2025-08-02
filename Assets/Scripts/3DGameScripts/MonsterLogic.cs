@@ -84,7 +84,7 @@ public class MonsterLogic : MonoBehaviour
     private Vector3 lastPosition = Vector3.zero;
     private float stuckTimer = 0f;
     private float stuckThreshold = 2f; // Время для определения застревания
-    private float stuckDistanceThreshold = 0.3f;
+    private float stuckDistanceThreshold = 0.001f;
     // Update is called once per frame
     //void FixedUpdate()
     //{
@@ -162,8 +162,7 @@ public class MonsterLogic : MonoBehaviour
         chaseTimer += Time.deltaTime;
         isLooking = false;
         NodeFixator();
-        CheckForStuck();
-
+        
         text.text = playerScript.healthBar.ToString();
 
         if (!freeze)
@@ -195,6 +194,9 @@ public class MonsterLogic : MonoBehaviour
                 UpdateWanderSetup(targetPointPos);
             }
             else UpdateWanderSetup();
+
+            CheckForStuck();
+
         }
         
 
@@ -304,8 +306,6 @@ public class MonsterLogic : MonoBehaviour
             {
                 timerForResidence += Time.deltaTime;
             }
-            
-
             if (!agent.hasPath)
             {
                 timer -= Time.deltaTime;
@@ -573,7 +573,7 @@ public class MonsterLogic : MonoBehaviour
     }
     private Vector3 ValidNavMeshPoint(Vector3 originPos, float dist, int mask, float maxPathLenght, float minDist, NavMeshAgent agent, Vector3 interest)
     {
-        int tries = 1000;
+        int tries = 50;
         for (int i = 0; i <= tries; i++)
         {
             Vector3 point = NavMeshPoint(originPos, dist, mask);
@@ -608,7 +608,7 @@ public class MonsterLogic : MonoBehaviour
 
         return originPos;
     }
-    private NavMeshPath SetPathToPoint(Vector3 point, NavMeshPath path)
+    public NavMeshPath SetPathToPoint(Vector3 point, NavMeshPath path)
     {
         agent.CalculatePath(point, path);
         return path;

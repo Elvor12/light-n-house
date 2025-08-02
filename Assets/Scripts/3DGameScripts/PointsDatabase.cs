@@ -1,11 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class PointsDatabase : MonoBehaviour
 {
     public Dictionary<int, PatrolPoint> points = new();
+    public MonsterLogic monsterLogic;
+    private NavMeshAgent agent;
     void Start()
     {
+        agent = monsterLogic.GetComponent<NavMeshAgent>();
         points.Clear();
         PatrolPoint[] patrolPoints = GetComponentsInChildren<PatrolPoint>();
         for (int i = 0; i < patrolPoints.Length; i++)
@@ -14,6 +18,10 @@ public class PointsDatabase : MonoBehaviour
         }
         foreach (var elem in points)
         {
+            NavMeshPath path = new();
+            
+            if (!agent.CalculatePath(elem.Value.position, path) || path.status != NavMeshPathStatus.PathComplete)
+                Debug.LogError("There is hole in navmeshWeb, Ivan, pls, fix it");
             Debug.Log($"{elem.Key}, {elem.Value}");
         }
     }
