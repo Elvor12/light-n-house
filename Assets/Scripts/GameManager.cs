@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviour
         timerForchangingInterestPoint += Time.deltaTime;
 
         timerForActivatingMiniGame += Time.deltaTime;
-        if (timerForActivatingMiniGame >= 100f && sceneManager.IsUsingFirstCamera())
+        if (timerForActivatingMiniGame >= 10f && sceneManager.IsUsingFirstCamera())
         {
             mark.gameObject.SetActive(true);
             monstersArriving = true;

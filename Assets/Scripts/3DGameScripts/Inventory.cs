@@ -32,4 +32,17 @@ public class Inventory : MonoBehaviour
         }
         return false;
     }
+
+    public int GetItemCount(string itemName)
+    {
+        int count = 0;
+        foreach (var item in items)
+        {
+            if (item.itemName == itemName)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
 }

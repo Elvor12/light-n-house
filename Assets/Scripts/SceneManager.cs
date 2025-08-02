@@ -7,7 +7,10 @@ public class ScenesManager : MonoBehaviour
     public Camera secondCamera;
     public GameManager gameManager;
     public GameManagerMiniGame gameManagerMiniGame;
+    [SerializeField] private GameObject myCanvas;
+
     private string secondScene = "MiniGame";
+
     void Start()
     {
         if (firstCamera != null)
@@ -64,6 +67,7 @@ public class ScenesManager : MonoBehaviour
         {
             firstCamera.enabled = false;
             secondCamera.enabled = true;
+            myCanvas.SetActive(false);
             gameManagerMiniGame.StartMiniGame();        
         }
     }
@@ -72,6 +76,8 @@ public class ScenesManager : MonoBehaviour
     {
         if (firstCamera != null)
         {
+            myCanvas.SetActive(true);
+            Debug.Log("ABOAB");
             firstCamera.enabled = true;
             secondCamera.enabled = false;
             gameManager.IsMiniGameCleared(gameManagerMiniGame.StopMiniGame());
