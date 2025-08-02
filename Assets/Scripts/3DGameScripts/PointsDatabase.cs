@@ -19,7 +19,7 @@ public class PointsDatabase : MonoBehaviour
         foreach (var elem in points)
         {
             NavMeshPath path = new();
-            if (agent.CalculatePath(elem.Value.position, path) && path.status == NavMeshPathStatus.PathComplete) Debug.LogError("Ivan, pochini pls");
+            if (!agent.CalculatePath(elem.Value.position, path) || path.status != NavMeshPathStatus.PathComplete) Debug.LogError("Ivan, pochini pls");
             Debug.Log($"{elem.Key}, {elem.Value}");
         }
     }
