@@ -21,8 +21,6 @@ public class MonsterLogic : MonoBehaviour
     public LineRenderer linerender;
     public float lineLenght;
 
-    public readonly float normalSpeed = 3.5f;
-
     public float maxDistForTarget = 5f;
     public float minDistForTarget = 2f;
     public float minDistForDirection = 3f;
@@ -56,7 +54,7 @@ public class MonsterLogic : MonoBehaviour
     private Vector3 offsetDirection = Vector3.zero;
     private Vector3 targetLastTimeSeenPos = Vector3.zero;
     private Vector3 smootheLookDirection = Vector3.forward;
-    public Vector3 shiftedLookDirection = Vector3.zero;
+    private Vector3 shiftedLookDirection = Vector3.zero;
     private Vector3 fixedLookDirection = Vector3.zero;
     private Vector3 dynamicAxe = Vector3.up;
     public Vector3 interestPointPos = Vector3.zero;
@@ -81,7 +79,6 @@ public class MonsterLogic : MonoBehaviour
         timer = setWanderTimer;
         path = new();
         interestPath = new();
-        agent.updateRotation = false;
         //interestPoint = targetPos.position;
     }
     private Vector3 lastPosition = Vector3.zero;
@@ -166,9 +163,8 @@ public class MonsterLogic : MonoBehaviour
         isLooking = false;
         NodeFixator();
 
-        UpdateRotationForSprite();
-
         text.text = playerScript.healthBar.ToString();
+
         if (!freeze)
         {
             if (Vector3.Distance(transform.position, targetPos.position) < killingDistance && ObserveCheck())
@@ -188,7 +184,7 @@ public class MonsterLogic : MonoBehaviour
                 scenesManager.InMiniGameCheck();
 
             }
-
+        
             UpdateViewDirection();
 
             UpdateChaseSetup();
@@ -200,7 +196,6 @@ public class MonsterLogic : MonoBehaviour
             else UpdateWanderSetup();
 
             CheckForStuck();
-
 
         }
         
@@ -359,6 +354,9 @@ public class MonsterLogic : MonoBehaviour
                 smootheLookDirection = UpdateSmootheLookDirection(smootheLookDirection, midDirection, desiredLookDirection, ref goingToMid);
                 Vector3 right = Vector3.Cross(smootheLookDirection, Vector3.up);
                 dynamicAxe = Vector3.Cross(right, smootheLookDirection);
+
+                Quaternion targetRotation = Quaternion.LookRotation(smootheLookDirection);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, viewTimer * Time.deltaTime);
                 float angleDifference = Vector3.Angle(desiredLookDirection, smootheLookDirection);
 
                 if (agent.isStopped)
@@ -685,15 +683,6 @@ public class MonsterLogic : MonoBehaviour
     {
         transform.position = NavMeshPoint(pDatabase.GetNewTarget(), maxDistForTarget, -1);
         freeze = false;
-    }
-    public void UpdateRotationForSprite()
-    {
-        Vector3 direciton = targetPos.position - transform.position;
-        direciton.y = 0;
-        if (direciton != null)
-        {
-            transform.rotation = Quaternion.LookRotation(direciton);
-        }
     }
 
     private void OnDrawGizmos()

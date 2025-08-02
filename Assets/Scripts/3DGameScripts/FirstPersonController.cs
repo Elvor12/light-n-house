@@ -266,7 +266,7 @@ public class FirstPersonController : MonoBehaviour
         // Control camera movement
         if (lockedOnMonster)
         {
-            Vector3 direction = (monsterPos + Vector3.up * 2 - transform.position).normalized;
+            Vector3 direction = (monsterPos - transform.position).normalized;
             Quaternion targetRotation = Quaternion.LookRotation(direction);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime);
             if (Quaternion.Angle(transform.rotation, targetRotation) < 5f)
