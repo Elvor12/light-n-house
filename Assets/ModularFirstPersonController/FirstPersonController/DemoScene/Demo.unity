@@ -6108,7 +6108,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   timerForActivatingMiniGame: 0
   timerForGameOverMiniGame: 0
+  timerForchangingInterestPoint: 0
+  globalMovedBoard: 100
+  rearrangeTimerForInterestPoint: 0
   player: {fileID: 1548615167}
+  monsterLogic: {fileID: 1071780313}
   sceneManager: {fileID: 1057522980}
   mark: {fileID: 1943047265}
   monstersArriving: 0
@@ -8638,6 +8642,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7644189ce3fd44fb0ad169ebd8c5f96e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  monsterLogic: {fileID: 1071780313}
 --- !u!4 &1985605645
 Transform:
   m_ObjectHideFlags: 0
@@ -9578,6 +9583,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4459864850019384740, guid: 6bacecc4f3df9584198879c73a6b6c36, type: 3}
+      propertyPath: pDatabase
+      value: 
+      objectReference: {fileID: 1985605644}
+    - target: {fileID: 4459864850019384740, guid: 6bacecc4f3df9584198879c73a6b6c36, type: 3}
       propertyPath: sprintFOV
       value: 80
       objectReference: {fileID: 0}
@@ -9585,6 +9594,10 @@ PrefabInstance:
       propertyPath: enableZoom
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4459864850019384740, guid: 6bacecc4f3df9584198879c73a6b6c36, type: 3}
+      propertyPath: gameManager
+      value: 
+      objectReference: {fileID: 1185331548}
     - target: {fileID: 4459864850019384740, guid: 6bacecc4f3df9584198879c73a6b6c36, type: 3}
       propertyPath: enableSprint
       value: 1

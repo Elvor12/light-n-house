@@ -9,9 +9,11 @@ public class PatrolPoint : MonoBehaviour
     private Transform pointTransform;
     private MonsterLogic monsterLogic;
     private Transform monsterTransform;
+    private FirstPersonController playerScript;
     void Awake()
     {
         monsterLogic = FindAnyObjectByType<MonsterLogic>();
+        playerScript = FindAnyObjectByType<FirstPersonController>();
         pointTransform = GetComponent<Transform>();
         monsterTransform = monsterLogic.GetComponent<Transform>();
         NavMeshHit hit;
@@ -47,6 +49,12 @@ public class PatrolPoint : MonoBehaviour
                 monsterLogic.ClearPatrolPoint();
                 Debug.Log(monsterLogic.interestPointPos);
             }
+        }
+
+        if ((playerScript.transform.position - position).sqrMagnitude < radious * radious && playerScript.currentPatrolPoint != this)
+        {
+            playerScript.InZoneFlag = true;
+            playerScript.currentPatrolPoint = this;
         }
     }
     void OnDrawGizmos()

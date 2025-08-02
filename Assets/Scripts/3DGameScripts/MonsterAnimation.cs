@@ -27,7 +27,6 @@ public class MonsterAnimation : MonoBehaviour
         Vector3 monsterDirection = monsterLogic.shiftedLookDirection.normalized;
 
         float speed = monster.velocity.magnitude / monsterLogic.normalSpeed;
-        Debug.Log(speed);
 
         anime.speed = speed;
 

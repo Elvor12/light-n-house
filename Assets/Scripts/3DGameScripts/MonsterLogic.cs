@@ -104,7 +104,6 @@ public class MonsterLogic : MonoBehaviour
         {
             if (Vector3.Distance(transform.position, targetPos.position) < killingDistance && ObserveCheck())
             {
-                Debug.Log("check");
                 shiftingTime = 3;
                 focused = true;
                 settedTarget = null;
@@ -591,7 +590,6 @@ public class MonsterLogic : MonoBehaviour
         linerender.SetPosition(0, startPos);
         linerender.SetPosition(1, secondPos);
     }
-
     private bool IsVisible(Vector3 from, Vector3 to)
     {
         Vector3 dir = to - from;

@@ -17,10 +17,7 @@ using static UnityEngine.GraphicsBuffer;
 
 
 
-#if UNITY_EDITOR
-using UnityEditor;
-    using System.Net;
-#endif
+
 
 public class FirstPersonController : MonoBehaviour
 {
@@ -31,6 +28,11 @@ public class FirstPersonController : MonoBehaviour
     private Vector3 monsterPos;
     public MonsterLogic monsterLogic;
     private Inventory inventory;
+    public PointsDatabase pDatabase;
+    public GameManager gameManager;
+
+    public bool InZoneFlag = false;
+    public PatrolPoint currentPatrolPoint = null;
 
     #region Camera Movement Variables
 
@@ -452,6 +454,12 @@ public class FirstPersonController : MonoBehaviour
                 }
             }
         }
+        //Это должно быть только разово при заходе в другую зону
+        if (InZoneFlag)
+        {
+            gameManager.CalculateUpperTimer();
+            InZoneFlag = false;
+        }
 
 
         CheckGround();
@@ -633,11 +641,26 @@ public class FirstPersonController : MonoBehaviour
         lockedOnMonster = false;
         monsterPos = Vector3.zero;
     }
+    public PatrolPoint GetClosestPatrolPoint()
+    {
+        PatrolPoint closest = pDatabase.points[0];
+        float dist = 100000f;
+        foreach (var point in pDatabase.points)
+        {
+            float newDist = (point.Value.transform.position - transform.position).sqrMagnitude;
+            if (newDist < dist)
+            {
+                dist = newDist;
+                closest = point.Value;
+            }
+        }
+        return closest;
+    }
 
     public void GameOver()
     {
         gameOver = true;
-        Debug.Log("Слил катку");
+        Debug.Log(GetClosestPatrolPoint().position);
     }
 }
 
